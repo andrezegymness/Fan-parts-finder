@@ -304,6 +304,59 @@ header .stat .label {
 
 .no-pn { color: var(--text-dim); font-style: italic; font-size: 12px; }
 
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim);
+  padding: 4px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.parts-table tr:hover .edit-btn { opacity: 1; }
+.edit-btn:hover { color: var(--accent); background: var(--accent-glow); }
+
+.edit-input {
+  background: var(--bg);
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'DM Sans', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 8px;
+  width: 140px;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.edit-actions {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.edit-save, .edit-cancel {
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  transition: opacity 0.15s;
+}
+
+.edit-save { background: var(--accent); color: #0c0e12; }
+.edit-cancel { background: var(--border); color: var(--text-dim); }
+.edit-save:hover, .edit-cancel:hover { opacity: 0.8; }
+
 /* EMPTY STATE */
 .empty-state {
   text-align: center;
@@ -409,6 +462,24 @@ const DATA = {"fans": [{"name": "Chill 2", "modelNumbers": ["FR-W2605"], "produc
 const fans = DATA.fans;
 const partIndex = DATA.partIndex;
 
+// Apply saved edits from localStorage
+const EDITS_KEY = 'fanPartsEdits';
+function loadEdits() {
+  try { return JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveEdits(edits) {
+  localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
+}
+(function applyStoredEdits() {
+  const edits = loadEdits();
+  fans.forEach(fan => {
+    fan.parts.forEach(p => {
+      const key = fan.name + '|' + p.name;
+      if (edits[key] !== undefined) p.partNumber = edits[key];
+    });
+  });
+})();
+
 document.getElementById('fan-count').textContent = fans.length;
 document.getElementById('part-count').textContent = partIndex.length;
 
@@ -447,6 +518,52 @@ function searchFans(query) {
   return { fanResults, partResults };
 }
 
+// Track current render's fan results for edit indexing
+let _lastFanResults = [];
+
+function startEdit(fanResultIdx, partIdx) {
+  const fan = _lastFanResults[fanResultIdx];
+  if (!fan) return;
+  const part = fan.parts[partIdx];
+  const cell = document.getElementById(`pn-cell-${fanResultIdx}-${partIdx}`);
+  if (!cell || cell.dataset.editing) return;
+  cell.dataset.editing = '1';
+  const current = part.partNumber || '';
+  cell.innerHTML = `
+    <input class="edit-input" id="pn-input-${fanResultIdx}-${partIdx}" type="text" value="${escapeHtml(current)}" placeholder="Enter part number" />
+    <span class="edit-actions">
+      <button class="edit-save" onclick="saveEdit(${fanResultIdx},${partIdx})">Save</button>
+      <button class="edit-cancel" onclick="cancelEdit(${fanResultIdx},${partIdx})">Cancel</button>
+    </span>`;
+  const inp = document.getElementById(`pn-input-${fanResultIdx}-${partIdx}`);
+  inp.focus();
+  inp.select();
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveEdit(fanResultIdx, partIdx);
+    if (e.key === 'Escape') cancelEdit(fanResultIdx, partIdx);
+  });
+}
+
+function saveEdit(fanResultIdx, partIdx) {
+  const fan = _lastFanResults[fanResultIdx];
+  if (!fan) return;
+  const part = fan.parts[partIdx];
+  const inp = document.getElementById(`pn-input-${fanResultIdx}-${partIdx}`);
+  if (!inp) return;
+  const newVal = inp.value.trim();
+  part.partNumber = newVal;
+  // Persist
+  const edits = loadEdits();
+  edits[fan.name + '|' + part.name] = newVal;
+  saveEdits(edits);
+  // Re-render
+  renderResults(searchEl.value);
+}
+
+function cancelEdit(fanResultIdx, partIdx) {
+  renderResults(searchEl.value);
+}
+
 function renderResults(query) {
   const q = query.trim();
   if (!q) {
@@ -479,6 +596,9 @@ function renderResults(query) {
     </div>`;
   });
 
+  // Store for edit callbacks
+  _lastFanResults = fanResults;
+
   // Fan cards
   fanResults.forEach((fan, i) => {
     const open = fanResults.length === 1 ? ' open' : '';
@@ -499,11 +619,22 @@ function renderResults(query) {
         <table class="parts-table">
           <thead><tr><th>Part Name</th><th>Part Number</th></tr></thead>
           <tbody>
-            ${fan.parts.map(p => `
+            ${fan.parts.map((p, pi) => {
+              const fk = CSS.escape ? encodeURIComponent(fan.name) : fan.name.replace(/'/g,"\\'");
+              const pnDisplay = p.partNumber
+                ? `<span class="part-number">${highlightMatch(p.partNumber, q)}</span>`
+                : '<span class="no-pn">N/A</span>';
+              return `
               <tr>
                 <td class="part-name">${highlightMatch(p.name, q)}</td>
-                <td>${p.partNumber ? `<span class="part-number">${highlightMatch(p.partNumber, q)}</span>` : '<span class="no-pn">N/A</span>'}</td>
-              </tr>`).join('')}
+                <td id="pn-cell-${i}-${pi}">
+                  ${pnDisplay}
+                  <button class="edit-btn" onclick="startEdit(${i},${pi})" title="Edit part number">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                </td>
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>
