@@ -803,7 +803,7 @@ function saveNewFan() {
 }
 
 document.getElementById('fan-count').textContent = fans.length;
-document.getElementById('part-count').textContent = partIndex.length;
+document.getElementById('part-count').textContent = fans.reduce((sum, f) => sum + f.parts.length, 0);
 
 const searchEl = document.getElementById('search');
 const resultsEl = document.getElementById('results');
