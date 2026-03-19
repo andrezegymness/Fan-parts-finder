@@ -357,6 +357,147 @@ header .stat .label {
 .edit-cancel { background: var(--border); color: var(--text-dim); }
 .edit-save:hover, .edit-cancel:hover { opacity: 0.8; }
 
+/* ADD PART ROW */
+.add-part-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  margin: 8px 24px 12px;
+  padding: 7px 14px;
+  transition: border-color 0.15s, color 0.15s;
+  width: calc(100% - 48px);
+  justify-content: center;
+}
+.add-part-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.add-part-row td { padding: 10px 24px; border-top: 1px solid var(--border); background: rgba(78,205,196,0.03); }
+.add-part-inputs { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.add-part-inputs input {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 5px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.add-part-inputs input:focus { border-color: var(--accent); }
+.add-part-inputs input.inp-name { flex: 1; min-width: 140px; }
+.add-part-inputs input.inp-pn { width: 150px; }
+
+/* MODAL */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-backdrop.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: fadeUp 0.2s ease;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; }
+.modal-close { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; border-radius: 6px; display: flex; }
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
+.form-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.form-hint { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+.parts-builder { margin-top: 4px; }
+.parts-builder-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.parts-builder-row input { flex: 1; }
+.parts-builder-row input.pb-pn { max-width: 160px; }
+.remove-part-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; border-radius: 4px; flex-shrink: 0; }
+.remove-part-btn:hover { color: #ff6b6b; }
+.add-pb-row {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 6px 12px;
+  margin-top: 4px;
+  width: 100%;
+  transition: border-color 0.15s, color 0.15s;
+}
+.add-pb-row:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-primary { background: var(--accent); border: none; border-radius: 8px; color: #0c0e12; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; padding: 10px 20px; transition: opacity 0.15s; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-secondary { background: var(--border); border: none; border-radius: 8px; color: var(--text-dim); cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 20px; transition: opacity 0.15s; }
+.btn-secondary:hover { opacity: 0.8; }
+
+/* FLOATING ADD FAN BUTTON */
+.fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: var(--accent);
+  color: #0c0e12;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 14px 22px;
+  box-shadow: 0 4px 20px rgba(78,205,196,0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+  z-index: 50;
+}
+.fab:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(78,205,196,0.45); }
+@media (max-width: 600px) { .fab { bottom: 20px; right: 20px; padding: 12px 18px; } }
+
 /* EMPTY STATE */
 .empty-state {
   text-align: center;
@@ -454,6 +595,48 @@ mark {
   <div class="search-hint">Search across <kbd>fan names</kbd> <kbd>model numbers</kbd> <kbd>part numbers</kbd></div>
 
   <div id="results"></div>
+</div>
+
+<!-- Floating Add Fan Button -->
+<button class="fab" onclick="openAddFanModal()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  Add Fan
+</button>
+
+<!-- Add New Fan Modal -->
+<div class="modal-backdrop" id="fan-modal" onclick="if(event.target===this)closeAddFanModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add New Fan</h2>
+      <button class="modal-close" onclick="closeAddFanModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="nf-name">Fan Name *</label>
+        <input class="form-input" id="nf-name" type="text" placeholder="e.g. Chill 2">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="nf-models">Model Number(s) *</label>
+        <input class="form-input" id="nf-models" type="text" placeholder="e.g. FR-W2605 (separate multiple with commas)">
+        <div class="form-hint">Separate multiple model numbers with commas</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="nf-url">Product URL</label>
+        <input class="form-input" id="nf-url" type="url" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parts</label>
+        <div class="parts-builder" id="parts-builder"></div>
+        <button class="add-pb-row" onclick="addModalPartRow()">+ Add Part</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeAddFanModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveNewFan()">Save Fan</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -846,15 +1029,23 @@ function buildPartIndex(fans) {
 }
 const partIndex = buildPartIndex(fans);
 
-// Apply saved edits from localStorage
-const EDITS_KEY = 'fanPartsEdits';
-function loadEdits() {
-  try { return JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) { return {}; }
-}
-function saveEdits(edits) {
-  localStorage.setItem(EDITS_KEY, JSON.stringify(edits));
-}
-(function applyStoredEdits() {
+// ── localStorage helpers ──────────────────────────────────────────
+const EDITS_KEY      = 'fanPartsEdits';
+const ADDED_KEY      = 'fanPartsAdded';
+const CUSTOM_FANS_KEY = 'customFans';
+
+function loadEdits()  { try { return JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) { return {}; } }
+function saveEdits(v) { localStorage.setItem(EDITS_KEY, JSON.stringify(v)); }
+
+function loadAdded()  { try { return JSON.parse(localStorage.getItem(ADDED_KEY) || '{}'); } catch(e) { return {}; } }
+function saveAdded(v) { localStorage.setItem(ADDED_KEY, JSON.stringify(v)); }
+
+function loadCustomFans()  { try { return JSON.parse(localStorage.getItem(CUSTOM_FANS_KEY) || '[]'); } catch(e) { return []; } }
+function saveCustomFans(v) { localStorage.setItem(CUSTOM_FANS_KEY, JSON.stringify(v)); }
+
+// Apply all stored data to in-memory fans array
+(function applyStoredData() {
+  // 1. Apply part-number edits
   const edits = loadEdits();
   fans.forEach(fan => {
     fan.parts.forEach(p => {
@@ -862,7 +1053,122 @@ function saveEdits(edits) {
       if (edits[key] !== undefined) p.partNumber = edits[key];
     });
   });
+  // 2. Apply added parts
+  const added = loadAdded();
+  fans.forEach(fan => {
+    const extra = added[fan.name];
+    if (extra && extra.length) fan.parts.push(...extra);
+  });
+  // 3. Append custom fans
+  const custom = loadCustomFans();
+  fans.push(...custom);
 })();
+
+// ── Add Part to existing fan ──────────────────────────────────────
+function showAddPartRow(fanResultIdx) {
+  const tbody = document.getElementById(`parts-tbody-${fanResultIdx}`);
+  if (!tbody || document.getElementById(`add-part-row-${fanResultIdx}`)) return;
+  const tr = document.createElement('tr');
+  tr.id = `add-part-row-${fanResultIdx}`;
+  tr.className = 'add-part-row';
+  tr.innerHTML = `
+    <td colspan="2">
+      <div class="add-part-inputs">
+        <input class="form-input inp-name" id="ap-name-${fanResultIdx}" type="text" placeholder="Part name" />
+        <input class="form-input inp-pn"   id="ap-pn-${fanResultIdx}"   type="text" placeholder="Part number (optional)" />
+        <span class="edit-actions">
+          <button class="edit-save"   onclick="saveAddedPart(${fanResultIdx})">Save</button>
+          <button class="edit-cancel" onclick="cancelAddedPart(${fanResultIdx})">Cancel</button>
+        </span>
+      </div>
+    </td>`;
+  tbody.appendChild(tr);
+  document.getElementById(`ap-name-${fanResultIdx}`).focus();
+  tr.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  saveAddedPart(fanResultIdx);
+      if (e.key === 'Escape') cancelAddedPart(fanResultIdx);
+    });
+  });
+}
+
+function saveAddedPart(fanResultIdx) {
+  const fan  = _lastFanResults[fanResultIdx];
+  if (!fan) return;
+  const name = document.getElementById(`ap-name-${fanResultIdx}`).value.trim();
+  const pn   = document.getElementById(`ap-pn-${fanResultIdx}`).value.trim();
+  if (!name) { document.getElementById(`ap-name-${fanResultIdx}`).focus(); return; }
+  const newPart = { name, partNumber: pn };
+  fan.parts.push(newPart);
+  // Persist
+  const added = loadAdded();
+  if (!added[fan.name]) added[fan.name] = [];
+  added[fan.name].push(newPart);
+  saveAdded(added);
+  renderResults(searchEl.value);
+}
+
+function cancelAddedPart(fanResultIdx) {
+  const row = document.getElementById(`add-part-row-${fanResultIdx}`);
+  if (row) row.remove();
+}
+
+// ── Add New Fan modal ─────────────────────────────────────────────
+function openAddFanModal() {
+  const builder = document.getElementById('parts-builder');
+  builder.innerHTML = '';
+  addModalPartRow(); // start with one empty row
+  document.getElementById('nf-name').value = '';
+  document.getElementById('nf-models').value = '';
+  document.getElementById('nf-url').value = '';
+  document.getElementById('fan-modal').classList.add('open');
+  document.getElementById('nf-name').focus();
+}
+
+function closeAddFanModal() {
+  document.getElementById('fan-modal').classList.remove('open');
+}
+
+function addModalPartRow(name='', pn='') {
+  const builder = document.getElementById('parts-builder');
+  const row = document.createElement('div');
+  row.className = 'parts-builder-row';
+  row.innerHTML = `
+    <input class="form-input" type="text" placeholder="Part name" value="${escapeHtml(name)}" />
+    <input class="form-input pb-pn" type="text" placeholder="Part number" value="${escapeHtml(pn)}" />
+    <button class="remove-part-btn" onclick="this.parentElement.remove()" title="Remove">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+  builder.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+function saveNewFan() {
+  const name = document.getElementById('nf-name').value.trim();
+  const modelsRaw = document.getElementById('nf-models').value.trim();
+  const url  = document.getElementById('nf-url').value.trim();
+  if (!name) { document.getElementById('nf-name').focus(); return; }
+  if (!modelsRaw) { document.getElementById('nf-models').focus(); return; }
+  const modelNumbers = modelsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  const parts = [];
+  document.querySelectorAll('#parts-builder .parts-builder-row').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const pName = inputs[0].value.trim();
+    const pNum  = inputs[1].value.trim();
+    if (pName) parts.push({ name: pName, partNumber: pNum });
+  });
+  const newFan = { name, modelNumbers, productUrl: url, parts };
+  fans.push(newFan);
+  const custom = loadCustomFans();
+  custom.push(newFan);
+  saveCustomFans(custom);
+  // Update stat
+  document.getElementById('fan-count').textContent = fans.length;
+  closeAddFanModal();
+  // Show the new fan immediately
+  searchEl.value = name;
+  renderResults(name);
+}
 
 document.getElementById('fan-count').textContent = fans.length;
 document.getElementById('part-count').textContent = partIndex.length;
@@ -999,12 +1305,11 @@ function renderResults(query) {
         </div>
       </div>
       <div class="fan-body">
-        ${fan.productUrl ? `<a class="product-link" href="${escapeHtml(fan.productUrl)}" target="_blank" rel="noopener">View on ModernForms.com <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : ''}
+        ${fan.productUrl ? `<a class="product-link" href="${escapeHtml(fan.productUrl)}" target="_blank" rel="noopener">View Product Page <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : ''}
         <table class="parts-table">
           <thead><tr><th>Part Name</th><th>Part Number</th></tr></thead>
-          <tbody>
+          <tbody id="parts-tbody-${i}">
             ${fan.parts.map((p, pi) => {
-              const fk = CSS.escape ? encodeURIComponent(fan.name) : fan.name.replace(/'/g,"\\'");
               const pnDisplay = p.partNumber
                 ? `<span class="part-number">${highlightMatch(p.partNumber, q)}</span>`
                 : '<span class="no-pn">N/A</span>';
@@ -1021,6 +1326,10 @@ function renderResults(query) {
             }).join('')}
           </tbody>
         </table>
+        <button class="add-part-btn" onclick="showAddPartRow(${i})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Part
+        </button>
       </div>
     </div>`;
   });
