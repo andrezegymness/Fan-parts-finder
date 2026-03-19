@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modern Forms Fan Parts Lookup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@600;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0c0e12;
+  --surface: #15181f;
+  --surface-hover: #1c2029;
+  --border: #2a2e38;
+  --text: #e8eaed;
+  --text-dim: #8b8f9a;
+  --accent: #4ecdc4;
+  --accent-glow: rgba(78, 205, 196, 0.15);
+  --accent-dim: #3ba89f;
+  --orange: #ff6b35;
+  --radius: 12px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* HEADER */
+header {
+  padding: 60px 0 40px;
+  text-align: center;
+}
+
+header .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+header .brand svg {
+  width: 36px;
+  height: 36px;
+}
+
+header .brand-text {
+  font-family: 'Playfair Display', serif;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 600;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--text) 0%, var(--text-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+header p {
+  color: var(--text-dim);
+  font-size: 16px;
+  font-weight: 300;
+}
+
+header .stat-bar {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 24px;
+}
+
+header .stat {
+  text-align: center;
+}
+
+header .stat .num {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+header .stat .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* SEARCH */
+.search-wrap {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto 16px;
+}
+
+.search-wrap svg {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+#search {
+  width: 100%;
+  padding: 18px 20px 18px 52px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#search::placeholder { color: var(--text-dim); }
+
+#search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+.search-hint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 40px;
+}
+
+.search-hint kbd {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* RESULTS */
+#results {
+  padding-bottom: 80px;
+}
+
+.fan-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  animation: fadeUp 0.35s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.fan-header:hover { background: var(--surface-hover); }
+
+.fan-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fan-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.fan-model-nums {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.fan-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.parts-badge {
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.chevron {
+  width: 20px;
+  height: 20px;
+  color: var(--text-dim);
+  transition: transform 0.25s ease;
+}
+
+.fan-card.open .chevron { transform: rotate(180deg); }
+
+.fan-body {
+  display: none;
+  border-top: 1px solid var(--border);
+}
+
+.fan-card.open .fan-body { display: block; }
+
+.product-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 24px;
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.product-link:hover { color: var(--orange); }
+
+.parts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.parts-table th {
+  text-align: left;
+  padding: 10px 24px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  background: rgba(0,0,0,0.2);
+  font-weight: 500;
+}
+
+.parts-table td {
+  padding: 12px 24px;
+  font-size: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.parts-table tr:hover td { background: var(--surface-hover); }
+
+.part-name { font-weight: 500; }
+
+.part-number {
+  font-family: 'DM Sans', monospace;
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.no-pn { color: var(--text-dim); font-style: italic; font-size: 12px; }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  color: var(--border);
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.empty-state p { color: var(--text-dim); font-size: 14px; }
+
+/* highlight matched text */
+mark {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* PART INDEX REVERSE MATCH CARD */
+.reverse-match {
+  background: linear-gradient(135deg, rgba(255,107,53,0.08), transparent);
+  border: 1px solid rgba(255,107,53,0.25);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  animation: fadeUp 0.3s ease both;
+}
+
+.reverse-match-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--orange);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.reverse-match h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.reverse-match .rm-desc { color: var(--text-dim); font-size: 14px; margin-bottom: 8px; }
+
+.reverse-match .rm-models { font-size: 13px; color: var(--accent); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  header { padding: 40px 0 24px; }
+  header .stat-bar { gap: 20px; }
+  .fan-header { padding: 16px; }
+  .parts-table th, .parts-table td { padding: 10px 16px; }
+  .product-link { padding: 10px 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="18" r="4" fill="var(--accent)"/>
+        <path d="M18 2C18 2 22 10 22 14C22 16.2 20.2 18 18 18" stroke="var(--accent)" stroke-width="1.5" opacity="0.7"/>
+        <path d="M34 18C34 18 26 22 22 22C19.8 22 18 20.2 18 18" stroke="var(--accent)" stroke-width="1.5" opacity="0.7"/>
+        <path d="M18 34C18 34 14 26 14 22C14 19.8 15.8 18 18 18" stroke="var(--accent)" stroke-width="1.5" opacity="0.7"/>
+        <path d="M2 18C2 18 10 14 14 14C16.2 14 18 15.8 18 18" stroke="var(--accent)" stroke-width="1.5" opacity="0.7"/>
+      </svg>
+      <span class="brand-text">Modern Forms</span>
+    </div>
+    <h1>Fan Parts Lookup</h1>
+    <p>Search by fan name, model number, or part number</p>
+    <div class="stat-bar">
+      <div class="stat"><div class="num" id="fan-count">0</div><div class="label">Fan Models</div></div>
+      <div class="stat"><div class="num" id="part-count">0</div><div class="label">Parts Indexed</div></div>
+    </div>
+  </header>
+
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search" placeholder="e.g. Chill 2, FR-W2605, RPL-CAN-CYL..." autofocus>
+  </div>
+  <div class="search-hint">Search across <kbd>fan names</kbd> <kbd>model numbers</kbd> <kbd>part numbers</kbd></div>
+
+  <div id="results"></div>
+</div>
+
+<script>
+const DATA = {"fans": [{"name": "Chill 2", "modelNumbers": ["FR-W2605"], "productUrl": "https://modernforms.com/product/chill-2/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F2605-54-BD"}, {"name": "Hanging Bracket/Downrod Assembly", "partNumber": "RPL-CAN-CYL"}, {"name": "Canopy & Canopy Screw Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Luminaire Cover Adapter Plate", "partNumber": "RPL-F2605ADPCVR"}, {"name": "Luminaire Cover", "partNumber": "RPL-F2605-COVER"}, {"name": "Luminaire Adapter Plate", "partNumber": "RPL-F2605-ADP"}, {"name": "LED Module", "partNumber": "F4D-A-30W-R1-2750"}, {"name": "Acrylic Diffuser", "partNumber": "RPL-F2605-GLA"}, {"name": "Receiver", "partNumber": "F-R4-2605-054"}, {"name": "Remote Control", "partNumber": "F4-RCBT-WT"}, {"name": "Wire Connectors", "partNumber": "F-LDWIRE-12, F-LDWIRE-24, FR-W2605"}]}, {"name": "Smooth 5", "modelNumbers": ["FR-W2601"], "productUrl": "https://modernforms.com/product/smooth-5/", "parts": [{"name": "Blades", "partNumber": "RPL-F2601-56-BD"}, {"name": "Hanging Bracket/Downrod", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Screw Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate for Cover", "partNumber": "RPL-F2601-ADPBC-MB"}, {"name": "Bottom Cover", "partNumber": "RPL-F2601-COVER"}, {"name": "Adapter Plate for Luminaire", "partNumber": "RPL-F2601-ADP"}, {"name": "LED Module", "partNumber": "F3IN-120V-R1-CS-H"}, {"name": "PC Shade", "partNumber": "RPL-F2601-GLA"}, {"name": "Receiver w/ Wire Nuts/Ties", "partNumber": "F-R3-2601-056SC-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}, {"name": "Rippled Acrylic Shade", "partNumber": "RPL-SMOOTH-RDA"}]}, {"name": "Bolo / Bolo 62", "modelNumbers": ["FR-W2501", "FR-W2501-62"], "productUrl": "https://modernforms.com/product/bolo/", "parts": [{"name": "Blades", "partNumber": "RPL-F2501-56-BD"}, {"name": "Hanging Bracket/Downrod", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Screw Ring", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": "RPL-F2501-ADP"}, {"name": "LED Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "Luminaire Cover", "partNumber": "RPL-F2501-COVER"}, {"name": "Acrylic Shade", "partNumber": "RPL-F2501-GLA"}, {"name": "Receiver w/ Wire Nuts/Ties", "partNumber": "F-R3-2501-056CS-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Size Matters 56 With Luminaire", "modelNumbers": ["FR-W2403-56L"], "productUrl": "https://modernforms.com/product/size-matters-56-with-luminaire/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Size Matters 56", "modelNumbers": ["FR-W2403-56"], "productUrl": "https://modernforms.com/product/size-matters-56/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Radiant 56 / Radiant 64", "modelNumbers": ["FR-W2603-56", "FR-W2603-64"], "productUrl": "https://modernforms.com/product/radiant-56/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F2603-56-BD, RPL-F2603-64-BD"}, {"name": "Hanging Bracket/Downrod Assembly", "partNumber": "RPL-CAN-CYL"}, {"name": "Canopy & Canopy Screw Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Up-Light Diffuser", "partNumber": "RPL-F2603-LENS-U"}, {"name": "Up-Light LED Module", "partNumber": "F-2603-UPLED"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": "RPL-F2603-ADP"}, {"name": "LED Module", "partNumber": "F6D-A-30W-R1-2750"}, {"name": "Down Light Diffuser", "partNumber": "RPL-F2603-ALA, RPL-F2603-CS, RPL-F2603"}, {"name": "Receiver", "partNumber": "F-R4-2603-56CS-A, F-R4-2603-64CS-A"}, {"name": "Remote Control", "partNumber": "F4-RCUBT-WT"}, {"name": "Wire Connectors", "partNumber": "F-LDWIRE-12, F-LDWIRE-24, FR-D2603"}]}, {"name": "Crown", "modelNumbers": ["FR-W2602"], "productUrl": "https://modernforms.com/product/crown/", "parts": [{"name": "Blades (Set of 5)", "partNumber": "RPL-F2602-62-BD"}, {"name": "Hanging Bracket/Downrod", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Screw Ring", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Up-Light LED Module", "partNumber": "F-2603-UPLED"}, {"name": "Uplight Lens", "partNumber": "RPL-F2602-LENS-U"}, {"name": "Alabaster Up-Light", "partNumber": "RPL-F2602-GLA-U"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": "RPL-F2602-ADP-SB"}, {"name": "LED Module", "partNumber": "F4D-A-30W-R1-2750"}, {"name": "Alabaster Down Light", "partNumber": "RPL-F2602-GLA-D"}, {"name": "Receiver w/ Wire Nuts/Ties", "partNumber": "F-R4-2602-62CS-A"}, {"name": "Remote Control", "partNumber": "F4-RCUBT-WT"}, {"name": "Wire Connectors", "partNumber": "F-LDWIRE-12, F-LDWIRE-24"}]}, {"name": "Carve 72 / Carve 72 With Luminaire", "modelNumbers": ["FR-W2504-72", "FR-W2504-72L"], "productUrl": "https://modernforms.com/product/carve-72/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F2504-60-BD, RPL-F2504-72-BD"}, {"name": "Hanger Assembly", "partNumber": ""}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": "RPL-F2504COUCVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Adapter Plate", "partNumber": "RPL-F2504-ADP"}, {"name": "CCT LED Module", "partNumber": "F-2504-LED"}, {"name": "Acrylic Shade", "partNumber": "RPL-F2504-GLA"}, {"name": "Magnetic Adapter Plate", "partNumber": "RPL-F2504-HLD"}, {"name": "Industrial Cover", "partNumber": "RPL-F2504INDCAP"}, {"name": "Flat Cover", "partNumber": "RPL-F2504BLDCAP"}, {"name": "Control Receiver", "partNumber": "F-R3-2504-060CS-H, F-R3-2504-072CS-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Carve 60 / Carve 60 With Luminaire", "modelNumbers": ["FR-W2504-60", "FR-W2504-60L"], "productUrl": "https://modernforms.com/product/carve-60/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F2504-60-BD, RPL-F2504-72-BD"}, {"name": "Hanger Assembly", "partNumber": ""}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": "RPL-F2504COUCVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Adapter Plate", "partNumber": "RPL-F2504-ADP"}, {"name": "CCT LED Module", "partNumber": "F-2504-LED"}, {"name": "Acrylic Shade", "partNumber": "RPL-F2504-GLA"}, {"name": "Magnetic Adapter Plate", "partNumber": "RPL-F2504-HLD"}, {"name": "Industrial Cover", "partNumber": "RPL-F2504INDCAP"}, {"name": "Flat Cover", "partNumber": "RPL-F2504BLDCAP"}, {"name": "Control Receiver", "partNumber": "F-R3-2504-060CS-H, F-R3-2504-072CS-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Pisces 5", "modelNumbers": ["FR-W2503"], "productUrl": "https://modernforms.com/product/pisces-5/", "parts": [{"name": "Blades", "partNumber": "RPL-F2503-54-BD"}, {"name": "Hanging Bracket/Downrod", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Screw Ring", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": "F-2503-TRIM"}, {"name": "LED Module", "partNumber": "F3IN-120V-R1-CS-H"}, {"name": "Receiver w/ Wire Nuts/Ties", "partNumber": "F-R3-2503-054CS-A"}, {"name": "Alabaster Shade", "partNumber": "RPL-F2503-GLA"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Zephyr 72", "modelNumbers": ["FR-W2006-72"], "productUrl": "https://modernforms.com/product/zephyr-72/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F2006-72-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM-8"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": "RPL-F2006-BLADERNG"}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "CCT LED Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "Control Receiver", "partNumber": "F-R3-2006-072CS-H"}, {"name": "Glass Shade", "partNumber": "RPL-F2006-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-F2006-COVER"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Smooth", "modelNumbers": ["FR-W2502"], "productUrl": "https://modernforms.com/product/smooth/", "parts": [{"name": "Blades", "partNumber": "RPL-F2502-52-BD"}, {"name": "Hanging Bracket/Downrod", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Screw Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate for Cover", "partNumber": "RPL-F2502-ADPBC-MB"}, {"name": "Bottom Cover", "partNumber": "RPL-F2502-COVER"}, {"name": "Adapter Plate for Luminaire", "partNumber": "RPL-F2502-ADP"}, {"name": "LED Module", "partNumber": "F3IN-120V-R1-CS-H"}, {"name": "PC Shade", "partNumber": "RPL-F2502-GLA"}, {"name": "Receiver w/ Wire Nuts/Ties", "partNumber": "F-R3-2502-052CS-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Size Matters 65 / 65 With Luminaire", "modelNumbers": ["FR-W2403-65", "FR-W2403-65L"], "productUrl": "https://modernforms.com/product/size-matters-65/", "parts": [{"name": "Blade Set of 8", "partNumber": "RPL-F2403-65-BD, RPL-F2403-84-BD"}, {"name": "Blade Arm Assembly", "partNumber": "RPL-F2403-BARM"}, {"name": "Hanger Bracket", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Luminaire Cover", "partNumber": "RPL-F2403-COVER"}, {"name": "Luminaire Assembly", "partNumber": "F-2403-LED, F4IN-120V-R1-CS-H, RPL-F2403-GLA, F-R3-2403-065CS-A, F-R3-2403-084CS-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W2403"}]}, {"name": "Spinster", "modelNumbers": ["FR-W2404"], "productUrl": "https://modernforms.com/product/spinster/", "parts": [{"name": "Fan Assembly", "partNumber": "FR-W2404-60L"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}, {"name": "Wall Control", "partNumber": "F-WCBT-WT"}]}, {"name": "Size Matters 84 / 84 With Luminaire", "modelNumbers": ["FR-W2403-84", "FR-W2403-84L"], "productUrl": "https://modernforms.com/product/size-matters-84/", "parts": [{"name": "Blade Set of 8", "partNumber": "RPL-F2403-65-BD, RPL-F2403-84-BD"}, {"name": "Blade Arm Assembly", "partNumber": "RPL-F2403-BARM"}, {"name": "Hanger Bracket", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Luminaire Cover", "partNumber": "RPL-F2403-COVER"}, {"name": "Luminaire Assembly", "partNumber": "F-2403-LED, F4IN-120V-R1-CS-H, RPL-F2403-GLA, F-R3-2403-065CS-A, F-R3-2403-084CS-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W2403"}]}, {"name": "Zephyr 5", "modelNumbers": ["FR-W2401"], "productUrl": "https://modernforms.com/product/zephyr-5/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F2401-62-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM-8"}, {"name": "Canopy w/Canopy Ring", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": "RPL-F2401-BLADERNG"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}, {"name": "Wall Control", "partNumber": "F-WCBT-WT"}]}, {"name": "Aura / Aura 60", "modelNumbers": ["FR-W2303", "FR-W2303-60"], "productUrl": "https://modernforms.com/product/aura/", "parts": [{"name": "Blade Set of 8", "partNumber": "RPL-F2303-72-BD, RPL-F2303-60-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy w/Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-F2303COUCVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Clear Central Ring", "partNumber": "RPL-F2303-CEN-RING"}, {"name": "Decorative Blade Bracket", "partNumber": "RPL-F2303BRACK"}, {"name": "Blade Holder Adapter", "partNumber": "RPL-F2303BLDHDER"}, {"name": "Adapter Plate", "partNumber": "RPL-F2303-ADP"}, {"name": "CCT LED Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "Acrylic Shade", "partNumber": "RPL-F2303-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-2303-072CS-H, F-R3-2303-060CS-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Roboto XL / Roboto XL With Luminaire", "modelNumbers": ["FR-W2301", "FR-W2301L"], "productUrl": "https://modernforms.com/product/roboto-xl/", "parts": [{"name": "Blade Set", "partNumber": "RPL-F2301-70-BD"}, {"name": "Blade Arms", "partNumber": "RPL-F2301-BARMS"}, {"name": "Mounting Arms", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": "RPL-F2301-ADP"}, {"name": "Luminaire Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Luminaire Cover", "partNumber": "RPL-F2301-COVER"}, {"name": "PC Shade/Luminaire Kit", "partNumber": "RPL-F2301-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-2301-070"}, {"name": "Remote w/Wall Cradle", "partNumber": "FR-W23011"}]}, {"name": "Skylark 54", "modelNumbers": ["FH-W2202-54"], "productUrl": "https://modernforms.com/product/skylark-54/", "parts": [{"name": "Fan Blades", "partNumber": "RPL-F2202-54-BD"}, {"name": "Mounting Bracket", "partNumber": "RPL-F2202-HANGER"}, {"name": "Decorative Trim Ring", "partNumber": "RPL-F2202-TRIM"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": "RPL-F2202-ADP, RPL-F2202-PARTS"}, {"name": "CCT LED Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "PC Shade", "partNumber": "RPL-F2202-GLA"}, {"name": "Receiver", "partNumber": "F-R3-2202-054HCS-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Vox 26 2", "modelNumbers": ["FR-W1802-26"], "productUrl": "https://modernforms.com/product/vox-26-2/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1802"}, {"name": "Mounting Bracket", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1802-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-1802-0"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1802"}]}, {"name": "Torque / Torque 70", "modelNumbers": ["FR-W2204", "FR-W2204-70"], "productUrl": "https://modernforms.com/product/torque/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F2204-58-BD, RPL-F2204-70-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM, RPL-HGR-ASM-8"}, {"name": "Canopy w/Canopy Ring", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": "RPL-F2204COUCVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Decorative Bottom Assembly", "partNumber": "RPL-F2204DECASM"}, {"name": "Decorative Bottom Cap", "partNumber": "RPL-F2204CAPASM"}, {"name": "Control Receiver", "partNumber": "F-R3N-2204-058, F-R3N-2204-070"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, RPL-F2204-HEX, FR-W2204-58, FR-W2204-70"}]}, {"name": "Skylark 62", "modelNumbers": ["FR-W2202-62"], "productUrl": "https://modernforms.com/product/skylark-62/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F2202-54-BD, RPL-F2202-62-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy w/Canopy Ring", "partNumber": "RPL-CAN-RND"}, {"name": "Coupling Cover", "partNumber": "RPL-F2202COUCVR"}, {"name": "Motor Assembly", "partNumber": "RPL-F2202-PARTS"}, {"name": "Adapter Plate", "partNumber": "RPL-F2202-ADP"}, {"name": "CCT LED Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "PC Shade", "partNumber": "RPL-F2202-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-2202-054HCS-H, F-R3-2202-062HCS-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FR-W2202-54L, FR-W2202-62L"}]}, {"name": "Lucid 3", "modelNumbers": ["FR-W2102"], "productUrl": "https://modernforms.com/product/lucid-3/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Wyndmill", "modelNumbers": ["FR-W2201"], "productUrl": "https://modernforms.com/product/wyndmill/", "parts": [{"name": "Blades", "partNumber": "RPL-F2201-65-BD"}, {"name": "Hanging Bracket/Downrod", "partNumber": "RPL-HGR-ASM-6"}, {"name": "Canopy & Canopy Screw Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": "RPL-F2201-ADP, RPL-F2201-GLA"}, {"name": "Press Plates", "partNumber": ""}, {"name": "Blade Arms", "partNumber": "RPL-F2201-BARM"}, {"name": "LED Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Acrylic Shade", "partNumber": "RPL-F2201-GLA"}, {"name": "Receiver w/ Wire Nuts/Ties", "partNumber": "F-R3-2201-065"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT"}]}, {"name": "Elf", "modelNumbers": ["FR-W1802"], "productUrl": "https://modernforms.com/product/elf/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1802"}, {"name": "Mounting Bracket", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1802-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-1802-0"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1802"}]}, {"name": "Orb 82", "modelNumbers": ["FR-W2402-82"], "productUrl": "https://modernforms.com/product/orb-82/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Orb 62", "modelNumbers": ["FR-W2402-62"], "productUrl": "https://modernforms.com/product/orb-62/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Stargazer", "modelNumbers": ["FR-W2104"], "productUrl": "https://modernforms.com/product/stargazer/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Wynd XL", "modelNumbers": ["FR-W2101"], "productUrl": "https://modernforms.com/product/wynd-xl/", "parts": [{"name": "Blade Set of 9", "partNumber": "RPL-F2101-72-BD"}, {"name": "Blade Press Plates", "partNumber": ""}, {"name": "Mounting Bracket Downrod", "partNumber": "RPL-HGR-ASM-XL"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL-XL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "Luminaire Cover", "partNumber": "RPL-F2101-COVER"}, {"name": "Acrylic Shade", "partNumber": "RPL-F1801-GLA"}, {"name": "Receiver w/Hardware", "partNumber": "F-R3-2101-72CS-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W2101"}]}, {"name": "Mykonos 5", "modelNumbers": ["FR-W2008"], "productUrl": "https://modernforms.com/product/mykonos-5/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F2008-60-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-RND"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR-2008"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "LED Module", "partNumber": "F3IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F2008-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-2008-060"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W2008"}]}, {"name": "Axis 44", "modelNumbers": ["FR-W1803-44"], "productUrl": "https://modernforms.com/product/axis-44/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1803"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1803-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-FR1803-COVER"}, {"name": "Control Receiver w/Hardware", "partNumber": "F-R3-1803-0"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FR-W1803-44"}]}, {"name": "Roboto 62", "modelNumbers": ["FR-W1910-62"], "productUrl": "https://modernforms.com/product/roboto-62/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1910"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-RND"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Control Receiver", "partNumber": "F-R3N-1910"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1910"}]}, {"name": "Roboto 52", "modelNumbers": ["FR-W1910-52"], "productUrl": "https://modernforms.com/product/roboto-52/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1910-52-BD, RPL-F1910-62-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-RND"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Control Receiver w/Hardware", "partNumber": "F-R3N-1910-52CS-A, F-R3N-1910-62CS-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1910"}]}, {"name": "Aviator", "modelNumbers": ["FR-W1811"], "productUrl": "https://modernforms.com/product/aviator/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1811-54-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy w/Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Lower Cover Bottom Cap", "partNumber": "RPL-F1811-54-CA"}, {"name": "Control Receiver", "partNumber": "F-R3-1811-054"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FR-W1811"}]}, {"name": "Vortex", "modelNumbers": ["FR-W1810"], "productUrl": "https://modernforms.com/product/vortex/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1810-60-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy W/Trim", "partNumber": "RPL-CAN-OCT"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Control Receiver", "partNumber": "F-R3N-1810-060"}, {"name": "Remote Control W/ Hardware", "partNumber": "F-RCBT-WT, FR-W1810"}]}, {"name": "Hydra 96", "modelNumbers": ["FR-W1805-96"], "productUrl": "https://modernforms.com/product/hydra-96/", "parts": [{"name": "Blade Set of 8", "partNumber": "RPL-F1805"}, {"name": "Hanger Assembly", "partNumber": "RPL-F1805-HGR"}, {"name": "Canopy & Canopy", "partNumber": "RPL-F1805-CAN"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Arm Set of 8", "partNumber": "RPL-F1805-BARM"}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1805-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1805-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1805"}, {"name": "Wall Control w/ Hardware", "partNumber": "F-WCBT-WT, FR-W1805"}]}, {"name": "Hydra 80", "modelNumbers": ["FR-W1805-80"], "productUrl": "https://modernforms.com/product/hydra-80/", "parts": [{"name": "Blade Set of 8", "partNumber": "RPL-F1805"}, {"name": "Hanger Assembly", "partNumber": "RPL-F1805-HGR"}, {"name": "Canopy & Canopy", "partNumber": "RPL-F1805-CAN"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Arm Set of 8", "partNumber": "RPL-F1805-BARM"}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1805-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1805-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1805"}, {"name": "Wall Control w/ Hardware", "partNumber": "F-WCBT-WT, FR-W1805"}]}, {"name": "Hydra 120", "modelNumbers": ["FR-W1805-120"], "productUrl": "https://modernforms.com/product/hydra-120/", "parts": [{"name": "Blade Set of 8", "partNumber": "RPL-F1805"}, {"name": "Hanger Assembly", "partNumber": "RPL-F1805-HGR"}, {"name": "Canopy & Canopy", "partNumber": "RPL-F1805-CAN"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Arm Set of 8", "partNumber": "RPL-F1805-BARM"}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1805-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1805-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1805"}, {"name": "Wall Control w/ Hardware", "partNumber": "F-WCBT-WT, FR-W1805"}]}, {"name": "Wynd 42", "modelNumbers": ["FR-W1801-42"], "productUrl": "https://modernforms.com/product/wynd-42/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1801-42-BD, RPL-F1801-52-BD, RPL-F1801-60-BD"}, {"name": "Mounting Bracket Downrod", "partNumber": "RPL-HGR-ASM"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1801-COVER"}, {"name": "Acrylic Shade", "partNumber": "RPL-F1801-GLA"}, {"name": "Receiver w/Hardware", "partNumber": "F-R3-1801-42CS-A, F-R3-1801-52CS-A, F-R3-1801-60CS-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1801"}]}, {"name": "Axis 52", "modelNumbers": ["FR-W1803-52"], "productUrl": "https://modernforms.com/product/axis-52/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1803"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1803-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-FR1803-COVER"}, {"name": "Control Receiver w/Hardware", "partNumber": "F-R3-1803"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FR-W1803-52"}]}, {"name": "Mykonos", "modelNumbers": ["FR-W1819"], "productUrl": "https://modernforms.com/product/mykonos/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1819-52-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy Screw", "partNumber": "RPL-CAN-RND"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR-1819"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "LED Module", "partNumber": "F3IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1819-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-1819-052-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1819"}]}, {"name": "Osprey", "modelNumbers": ["FR-W1817"], "productUrl": "https://modernforms.com/product/osprey/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1817-56-BD"}, {"name": "Blade Support Plate (3)", "partNumber": ""}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F3IN-120V-R1-30"}, {"name": "Glass Shade w/Trim", "partNumber": "RPL-F1817-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-1817-056"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1817"}]}, {"name": "Windflower 80", "modelNumbers": ["FR-W1815-80"], "productUrl": "https://modernforms.com/product/windflower-80/", "parts": [{"name": "Blade Set of 12", "partNumber": "RPL-F1815"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1815-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1815-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1815"}, {"name": "Wall Control w/ Hardware", "partNumber": "F-WCBT-WT, FR-W1815"}]}, {"name": "Windflower 60", "modelNumbers": ["FR-W1815-60"], "productUrl": "https://modernforms.com/product/windflower-60/", "parts": [{"name": "Blade Set of 12", "partNumber": "RPL-F1815"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1815-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1815-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1815"}, {"name": "Wall Control w/ Hardware", "partNumber": "F-WCBT-WT, FR-W1815"}]}, {"name": "Morpheus III", "modelNumbers": ["FR-W1813"], "productUrl": "https://modernforms.com/product/morpheus-iii/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1813-60-BD"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy w/Canopy Ring", "partNumber": "RPL-CAN-RND"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Control Receiver", "partNumber": "F-R3-1813-060"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1813-COVER"}, {"name": "Glass Shade", "partNumber": "RPL-F1813-GLA"}, {"name": "Remote Control W/ Hardware", "partNumber": "F-RCBT-WT, FR-W1813"}]}, {"name": "Aviator 70", "modelNumbers": ["FR-W1811-70"], "productUrl": "https://modernforms.com/product/aviator-70/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1811"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy w/Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Support Plate", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Lower Cover Bottom Cap", "partNumber": "RPL-F1811"}, {"name": "Control Receiver", "partNumber": "F-R3-1811-0"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, F1811-70-PARTS, FR-W1811"}]}, {"name": "Aviator 54 5", "modelNumbers": ["FR-W1811-54"], "productUrl": "https://modernforms.com/product/aviator-54-5/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1811"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy w/Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Blade Support Plate", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Lower Cover Bottom Cap", "partNumber": "RPL-F1811"}, {"name": "Control Receiver", "partNumber": "F-R3-1811-0"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FR-W1811"}]}, {"name": "Lotus", "modelNumbers": ["FR-W1809"], "productUrl": "https://modernforms.com/product/lotus/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1809-54-BD"}, {"name": "Blade Support Plate Set of 3", "partNumber": ""}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": ""}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR, RPL-LOTUS-PARTS"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F3IN-120V-R1-CS-H"}, {"name": "Glass Shade w/Trim", "partNumber": "RPL-F1809-GLA, RPL-F1809-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1809-54CS-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT"}]}, {"name": "Wynd 52", "modelNumbers": ["FR-W1801-52"], "productUrl": "https://modernforms.com/product/wynd-52/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1801-42-BD, RPL-F1801-52-BD, RPL-F1801-60-BD"}, {"name": "Mounting Bracket Downrod", "partNumber": "RPL-HGR-ASM"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1801-COVER"}, {"name": "Acrylic Shade", "partNumber": "RPL-F1801-GLA"}, {"name": "Receiver w/Hardware", "partNumber": "F-R3-1801-42CS-A, F-R3-1801-52CS-A, F-R3-1801-60CS-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1801"}]}, {"name": "Woody 60", "modelNumbers": ["FR-W1814-60"], "productUrl": "https://modernforms.com/product/woody-60/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1814"}, {"name": "Hanger Assembly", "partNumber": "RPL-HGR-ASM"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-RND"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Upper Blade Holders", "partNumber": ""}, {"name": "LED Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1814-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1814-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1814-0"}, {"name": "Remote Control w/Wire Nuts", "partNumber": "F-RCBT-WT, FR-W1814"}]}, {"name": "Zephyr 62", "modelNumbers": ["FR-W2006-62"], "productUrl": "https://modernforms.com/product/zephyr-62/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Zephyr 52", "modelNumbers": ["FR-W2006-52"], "productUrl": "https://modernforms.com/product/zephyr-52/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Renegade 52", "modelNumbers": ["FR-W2001-52"], "productUrl": "https://modernforms.com/product/renegade-52/", "parts": [{"name": "Blade Set of 8", "partNumber": "RPL-F2001, RPL-F-2001-BARM"}, {"name": "Downrod Assembly", "partNumber": "RPL-F2001-HGR, RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": "RPL-F2001-HGR"}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Luminaire Cover", "partNumber": "RPL-F2001-COVER"}, {"name": "Luminaire Glass", "partNumber": "RPL-F2001-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-2001-0"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FR-W2001"}]}, {"name": "Renegade 66", "modelNumbers": ["FR-W2001-66"], "productUrl": "https://modernforms.com/product/renegade-66/", "parts": [{"name": "Blade Set of 8", "partNumber": "RPL-F2001, RPL-F-2001-BARM"}, {"name": "Downrod Assembly", "partNumber": "RPL-F2001-HGR, RPL-HGR-ASM"}, {"name": "Canopy & Canopy", "partNumber": "RPL-CAN-CYL"}, {"name": "Coupling Cover", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": "RPL-F2001-HGR"}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Luminaire Cover", "partNumber": "RPL-F2001-COVER"}, {"name": "Luminaire Glass", "partNumber": "RPL-F2001-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-2001-0"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FR-W2001"}]}, {"name": "Wynd 60", "modelNumbers": ["FR-W1801-60"], "productUrl": "https://modernforms.com/product/wynd-60/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1801-42-BD, RPL-F1801-52-BD, RPL-F1801-60-BD"}, {"name": "Mounting Bracket Downrod", "partNumber": "RPL-HGR-ASM"}, {"name": "Coupling Cover", "partNumber": "RPL-COU-CVR"}, {"name": "Canopy & Canopy Ring", "partNumber": "RPL-CAN-CYL"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "Luminaire Module", "partNumber": "F4IN-120V-R1-CS-H"}, {"name": "Luminaire Cover", "partNumber": "RPL-F1801-COVER"}, {"name": "Acrylic Shade", "partNumber": "RPL-F1801-GLA"}, {"name": "Receiver w/Hardware", "partNumber": "F-R3-1801-42CS-A, F-R3-1801-52CS-A, F-R3-1801-60CS-A"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FR-W1801"}]}, {"name": "Smooth Flush", "modelNumbers": ["FH-W2502-52"], "productUrl": "https://modernforms.com/product/smooth-flush/", "parts": [{"name": "Fan Blades", "partNumber": "RPL-F2502-52-BD"}, {"name": "Mounting Bracket", "partNumber": "RPL-F2502-HANGER"}, {"name": "Decorative Trim Ring", "partNumber": "RPL-F2502-TRIM"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate for Luminaire", "partNumber": "RPL-F2502-ADP"}, {"name": "Adapter Plate for Cover", "partNumber": "RPL-F2502-ADPBC-MB, RPL-FH2202-PARTS"}, {"name": "Bottom Cover", "partNumber": "RPL-F2502-COVER"}, {"name": "CCT LED Module", "partNumber": "F3IN-120V-R1-CS-H"}, {"name": "PC Shade", "partNumber": "RPL-F2502-GLA"}, {"name": "Receiver", "partNumber": "F-R3-2502-052CS-H"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FH-W2502-52L"}]}, {"name": "Veloce Smart Fan", "modelNumbers": ["FR-W2103"], "productUrl": "https://modernforms.com/product/veloce-smart-fan/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Corona 52", "modelNumbers": ["FH-W2203-52"], "productUrl": "https://modernforms.com/product/corona-52/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Skylark Flush", "modelNumbers": ["FH-W2202"], "productUrl": "https://modernforms.com/product/skylark-flush/", "parts": [{"name": "Fan Blades", "partNumber": "RPL-F2202-54-BD"}, {"name": "Mounting Bracket", "partNumber": "RPL-F2202-HANGER"}, {"name": "Decorative Trim Ring", "partNumber": "RPL-F2202-TRIM"}, {"name": "Motor Housing", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": "RPL-F2202-ADP, RPL-F2202-P"}, {"name": "CCT LED Module", "partNumber": "F4IN-120V-R1-CS"}, {"name": "PC Shade", "partNumber": "RPL-F2202-GLA"}, {"name": "Receiver", "partNumber": "F-R3-2202-054HCS"}, {"name": "Remote Control", "partNumber": "F-RCBT-WT, FH-W2202-54L"}]}, {"name": "Corona 44", "modelNumbers": ["FH-W2203-44"], "productUrl": "https://modernforms.com/product/corona-44/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Aloft", "modelNumbers": ["FR-W1818"], "productUrl": "https://modernforms.com/product/aloft/", "parts": [{"name": "\u2014", "partNumber": "\u2014"}]}, {"name": "Axis 44 Flush", "modelNumbers": ["FH-W1803-44"], "productUrl": "https://modernforms.com/product/axis-44-flush/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1803"}, {"name": "Hanger Plate", "partNumber": "RPL-F1803-HGR"}, {"name": "Trim Ring - Decorative", "partNumber": "RPL-FH1803-TRIM"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1803-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-FH1803-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1803-0"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FH-W1803-44"}]}, {"name": "Aviator 5 Flush", "modelNumbers": ["FH-W1811-5"], "productUrl": "https://modernforms.com/product/aviator-5-flush/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F-1811"}, {"name": "Blade Support Plate", "partNumber": ""}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Hanger Plate", "partNumber": "RPL-F1811-HANGER"}, {"name": "Hanger Gasket", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Bottom Cap (Aluminum)", "partNumber": "RPL-F1811-5-CA"}, {"name": "Receiver w/Wire Nuts and Ties", "partNumber": "F-R3-1811-5-0"}, {"name": "Remote Control w/Hardware", "partNumber": "F-RCBT-WT, F1811-5-FHPART, FH-W1811-5"}]}, {"name": "Aviator Flush", "modelNumbers": ["FH-W1811"], "productUrl": "https://modernforms.com/product/aviator-flush/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1811-54-BD"}, {"name": "Blade Collector Ring", "partNumber": ""}, {"name": "Hanger Plate", "partNumber": "RPL-F1811-HANGER"}, {"name": "Hanger Gasket", "partNumber": ""}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Bottom Cap (Aluminum)", "partNumber": "RPL-F1811-54-CA"}, {"name": "Control Receiver", "partNumber": "F-R3-1811-054"}, {"name": "Wall Control w/Hardware", "partNumber": "F-WCBT-WT, FH-W1811"}]}, {"name": "Axis 52 Flush", "modelNumbers": ["FH-W1803-52"], "productUrl": "https://modernforms.com/product/axis-52-flush/", "parts": [{"name": "Blade Set of 3", "partNumber": "RPL-F1803"}, {"name": "Hanger Plate", "partNumber": "RPL-F1803-HGR"}, {"name": "Trim Ring - Decorative", "partNumber": "RPL-FH1803-TRIM"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F4IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1803-GLA"}, {"name": "Luminaire Cover", "partNumber": "RPL-FH1803-COVER"}, {"name": "Control Receiver", "partNumber": "F-R3-1803"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FH-W1803-52"}]}, {"name": "Vox 26", "modelNumbers": ["FH-W1802-26"], "productUrl": "https://modernforms.com/product/vox-26/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1802"}, {"name": "Mounting Plate", "partNumber": "RPL-F1802-HGR"}, {"name": "Trim Ring Decorative", "partNumber": "RPL-F1802-TRIM"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1802-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-1802-0"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FH-W1802"}]}, {"name": "Vox 38", "modelNumbers": ["FH-W1802-38"], "productUrl": "https://modernforms.com/product/vox-38/", "parts": [{"name": "Blade Set of 5", "partNumber": "RPL-F1802"}, {"name": "Mounting Plate", "partNumber": "RPL-F1802-HGR"}, {"name": "Trim Ring Decorative", "partNumber": "RPL-F1802-TRIM"}, {"name": "Motor Assembly", "partNumber": ""}, {"name": "Adapter Plate", "partNumber": ""}, {"name": "LED Module", "partNumber": "F6IN-120V-R1-30"}, {"name": "Glass Shade", "partNumber": "RPL-F1802-GLA"}, {"name": "Control Receiver", "partNumber": "F-R3-1802-0"}, {"name": "Remote w/Wall Cradle", "partNumber": "F-RCBT-WT, FH-W1802"}]}], "partIndex": [{"partNumber": "F-2403-LED", "description": "Luminaire Assembly", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "F-2503-TRIM", "description": "Adapter Plate", "usedIn": "Pisces 5", "modelNumbers": "FR-W2503"}, {"partNumber": "F-2504-LED", "description": "CCT LED Module", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "F-2603-UPLED", "description": "Up-Light LED Module", "usedIn": "Crown, Radiant 56 / Radiant 64", "modelNumbers": "FR-W2602, FR-W2603-56, FR-W2603-64"}, {"partNumber": "F-LDWIRE-12", "description": "Wire Connectors", "usedIn": "Chill 2, Crown, Radiant 56 / Radiant 64", "modelNumbers": "FR-W2602, FR-W2603-56, FR-W2603-64, FR-W2605"}, {"partNumber": "F-LDWIRE-24", "description": "Wire Connectors", "usedIn": "Chill 2, Crown, Radiant 56 / Radiant 64", "modelNumbers": "FR-W2602, FR-W2603-56, FR-W2603-64, FR-W2605"}, {"partNumber": "F-R3-1801-42CS-A", "description": "Receiver w/Hardware", "usedIn": "Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60"}, {"partNumber": "F-R3-1801-52CS-A", "description": "Receiver w/Hardware", "usedIn": "Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60"}, {"partNumber": "F-R3-1801-60CS-A", "description": "Receiver w/Hardware", "usedIn": "Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60"}, {"partNumber": "F-R3-1802-0", "description": "Control Receiver", "usedIn": "Elf, Vox 26, Vox 26 2, Vox 38", "modelNumbers": "FH-W1802-26, FH-W1802-38, FR-W1802, FR-W1802-26"}, {"partNumber": "F-R3-1803", "description": "Control Receiver, Control Receiver w/Hardware", "usedIn": "Axis 52, Axis 52 Flush", "modelNumbers": "FH-W1803-52, FR-W1803-52"}, {"partNumber": "F-R3-1803-0", "description": "Control Receiver, Control Receiver w/Hardware", "usedIn": "Axis 44, Axis 44 Flush", "modelNumbers": "FH-W1803-44, FR-W1803-44"}, {"partNumber": "F-R3-1805", "description": "Control Receiver", "usedIn": "Hydra 120, Hydra 80, Hydra 96", "modelNumbers": "FR-W1805-120, FR-W1805-80, FR-W1805-96"}, {"partNumber": "F-R3-1809-54CS-A", "description": "Control Receiver", "usedIn": "Lotus", "modelNumbers": "FR-W1809"}, {"partNumber": "F-R3-1811-0", "description": "Control Receiver", "usedIn": "Aviator 54 5, Aviator 70", "modelNumbers": "FR-W1811-54, FR-W1811-70"}, {"partNumber": "F-R3-1811-054", "description": "Control Receiver", "usedIn": "Aviator, Aviator Flush", "modelNumbers": "FH-W1811, FR-W1811"}, {"partNumber": "F-R3-1811-5-0", "description": "Receiver w/Wire Nuts and Ties", "usedIn": "Aviator 5 Flush", "modelNumbers": "FH-W1811-5"}, {"partNumber": "F-R3-1813-060", "description": "Control Receiver", "usedIn": "Morpheus III", "modelNumbers": "FR-W1813"}, {"partNumber": "F-R3-1814-0", "description": "Control Receiver", "usedIn": "Woody 60", "modelNumbers": "FR-W1814-60"}, {"partNumber": "F-R3-1815", "description": "Control Receiver", "usedIn": "Windflower 60, Windflower 80", "modelNumbers": "FR-W1815-60, FR-W1815-80"}, {"partNumber": "F-R3-1817-056", "description": "Control Receiver", "usedIn": "Osprey", "modelNumbers": "FR-W1817"}, {"partNumber": "F-R3-1819-052-A", "description": "Control Receiver", "usedIn": "Mykonos", "modelNumbers": "FR-W1819"}, {"partNumber": "F-R3-2001-0", "description": "Control Receiver", "usedIn": "Renegade 52, Renegade 66", "modelNumbers": "FR-W2001-52, FR-W2001-66"}, {"partNumber": "F-R3-2006-072CS-H", "description": "Control Receiver", "usedIn": "Zephyr 72", "modelNumbers": "FR-W2006-72"}, {"partNumber": "F-R3-2008-060", "description": "Control Receiver", "usedIn": "Mykonos 5", "modelNumbers": "FR-W2008"}, {"partNumber": "F-R3-2101-72CS-A", "description": "Receiver w/Hardware", "usedIn": "Wynd XL", "modelNumbers": "FR-W2101"}, {"partNumber": "F-R3-2201-065", "description": "Receiver w/ Wire Nuts/Ties", "usedIn": "Wyndmill", "modelNumbers": "FR-W2201"}, {"partNumber": "F-R3-2202-054HCS", "description": "Receiver", "usedIn": "Skylark Flush", "modelNumbers": "FH-W2202"}, {"partNumber": "F-R3-2202-054HCS-H", "description": "Control Receiver, Receiver", "usedIn": "Skylark 54, Skylark 62", "modelNumbers": "FH-W2202-54, FR-W2202-62"}, {"partNumber": "F-R3-2202-062HCS-H", "description": "Control Receiver", "usedIn": "Skylark 62", "modelNumbers": "FR-W2202-62"}, {"partNumber": "F-R3-2301-070", "description": "Control Receiver", "usedIn": "Roboto XL / Roboto XL With Luminaire", "modelNumbers": "FR-W2301, FR-W2301L"}, {"partNumber": "F-R3-2303-060CS-H", "description": "Control Receiver", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "F-R3-2303-072CS-H", "description": "Control Receiver", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "F-R3-2403-065CS-A", "description": "Luminaire Assembly", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "F-R3-2403-084CS-A", "description": "Luminaire Assembly", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "F-R3-2501-056CS-H", "description": "Receiver w/ Wire Nuts/Ties", "usedIn": "Bolo / Bolo 62", "modelNumbers": "FR-W2501, FR-W2501-62"}, {"partNumber": "F-R3-2502-052CS-H", "description": "Receiver, Receiver w/ Wire Nuts/Ties", "usedIn": "Smooth, Smooth Flush", "modelNumbers": "FH-W2502-52, FR-W2502"}, {"partNumber": "F-R3-2503-054CS-A", "description": "Receiver w/ Wire Nuts/Ties", "usedIn": "Pisces 5", "modelNumbers": "FR-W2503"}, {"partNumber": "F-R3-2504-060CS-H", "description": "Control Receiver", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "F-R3-2504-072CS-H", "description": "Control Receiver", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "F-R3-2601-056SC-H", "description": "Receiver w/ Wire Nuts/Ties", "usedIn": "Smooth 5", "modelNumbers": "FR-W2601"}, {"partNumber": "F-R3N-1810-060", "description": "Control Receiver", "usedIn": "Vortex", "modelNumbers": "FR-W1810"}, {"partNumber": "F-R3N-1910", "description": "Control Receiver", "usedIn": "Roboto 62", "modelNumbers": "FR-W1910-62"}, {"partNumber": "F-R3N-1910-52CS-A", "description": "Control Receiver w/Hardware", "usedIn": "Roboto 52", "modelNumbers": "FR-W1910-52"}, {"partNumber": "F-R3N-1910-62CS-A", "description": "Control Receiver w/Hardware", "usedIn": "Roboto 52", "modelNumbers": "FR-W1910-52"}, {"partNumber": "F-R3N-2204-058", "description": "Control Receiver", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "F-R3N-2204-070", "description": "Control Receiver", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "F-R4-2602-62CS-A", "description": "Receiver w/ Wire Nuts/Ties", "usedIn": "Crown", "modelNumbers": "FR-W2602"}, {"partNumber": "F-R4-2603-56CS-A", "description": "Receiver", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "F-R4-2603-64CS-A", "description": "Receiver", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "F-R4-2605-054", "description": "Receiver", "usedIn": "Chill 2", "modelNumbers": "FR-W2605"}, {"partNumber": "F-RCBT-WT", "description": "Remote Control, Remote Control W/ Hardware, Remote Control w/Hardware, Remote Control w/Wire Nuts, Remote w/Wall Cradle", "usedIn": "Aura / Aura 60, Aviator, Aviator 5 Flush, Aviator 54 5, Aviator 70, Axis 44, Axis 44 Flush, Axis 52, Axis 52 Flush, Bolo / Bolo 62, Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire, Elf, Lotus, Morpheus III, Mykonos, Mykonos 5, Osprey, Pisces 5, Renegade 52, Renegade 66, Roboto 52, Roboto 62, Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire, Skylark 54, Skylark 62, Skylark Flush, Smooth, Smooth 5, Smooth Flush, Spinster, Torque / Torque 70, Vortex, Vox 26, Vox 26 2, Vox 38, Woody 60, Wynd 42, Wynd 52, Wynd 60, Wynd XL, Wyndmill, Zephyr 5, Zephyr 72", "modelNumbers": "FH-W1802-26, FH-W1802-38, FH-W1803-44, FH-W1803-52, FH-W1811-5, FH-W2202, FH-W2202-54, FH-W2502-52, FR-W1801-42, FR-W1801-52, FR-W1801-60, FR-W1802, FR-W1802-26, FR-W1803-44, FR-W1803-52, FR-W1809, FR-W1810, FR-W1811, FR-W1811-54, FR-W1811-70, FR-W1813, FR-W1814-60, FR-W1817, FR-W1819, FR-W1910-52, FR-W1910-62, FR-W2001-52, FR-W2001-66, FR-W2006-72, FR-W2008, FR-W2101, FR-W2201, FR-W2202-62, FR-W2204, FR-W2204-70, FR-W2303, FR-W2303-60, FR-W2401, FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L, FR-W2404, FR-W2501, FR-W2501-62, FR-W2502, FR-W2503, FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L, FR-W2601"}, {"partNumber": "F-WCBT-WT", "description": "Wall Control, Wall Control w/ Hardware, Wall Control w/Hardware", "usedIn": "Aviator Flush, Hydra 120, Hydra 80, Hydra 96, Spinster, Windflower 60, Windflower 80, Zephyr 5", "modelNumbers": "FH-W1811, FR-W1805-120, FR-W1805-80, FR-W1805-96, FR-W1815-60, FR-W1815-80, FR-W2401, FR-W2404"}, {"partNumber": "F1811-5-FHPART", "description": "Remote Control w/Hardware", "usedIn": "Aviator 5 Flush", "modelNumbers": "FH-W1811-5"}, {"partNumber": "F1811-70-PARTS", "description": "Remote Control", "usedIn": "Aviator 70", "modelNumbers": "FR-W1811-70"}, {"partNumber": "F3IN-120V-R1-30", "description": "LED Module", "usedIn": "Mykonos, Mykonos 5, Osprey", "modelNumbers": "FR-W1817, FR-W1819, FR-W2008"}, {"partNumber": "F3IN-120V-R1-CS-H", "description": "CCT LED Module, LED Module", "usedIn": "Lotus, Pisces 5, Smooth, Smooth 5, Smooth Flush", "modelNumbers": "FH-W2502-52, FR-W1809, FR-W2502, FR-W2503, FR-W2601"}, {"partNumber": "F4-RCBT-WT", "description": "Remote Control", "usedIn": "Chill 2", "modelNumbers": "FR-W2605"}, {"partNumber": "F4-RCUBT-WT", "description": "Remote Control", "usedIn": "Crown, Radiant 56 / Radiant 64", "modelNumbers": "FR-W2602, FR-W2603-56, FR-W2603-64"}, {"partNumber": "F4D-A-30W-R1-2750", "description": "LED Module", "usedIn": "Chill 2, Crown", "modelNumbers": "FR-W2602, FR-W2605"}, {"partNumber": "F4IN-120V-R1-30", "description": "LED Module, Luminaire Module", "usedIn": "Axis 44, Axis 44 Flush, Axis 52, Axis 52 Flush, Morpheus III, Renegade 52, Renegade 66, Roboto XL / Roboto XL With Luminaire, Woody 60, Wyndmill", "modelNumbers": "FH-W1803-44, FH-W1803-52, FR-W1803-44, FR-W1803-52, FR-W1813, FR-W1814-60, FR-W2001-52, FR-W2001-66, FR-W2201, FR-W2301, FR-W2301L"}, {"partNumber": "F4IN-120V-R1-CS", "description": "CCT LED Module", "usedIn": "Skylark Flush", "modelNumbers": "FH-W2202"}, {"partNumber": "F4IN-120V-R1-CS-H", "description": "CCT LED Module, LED Module, Luminaire Assembly, Luminaire Module", "usedIn": "Aura / Aura 60, Bolo / Bolo 62, Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire, Skylark 54, Skylark 62, Wynd 42, Wynd 52, Wynd 60, Wynd XL, Zephyr 72", "modelNumbers": "FH-W2202-54, FR-W1801-42, FR-W1801-52, FR-W1801-60, FR-W2006-72, FR-W2101, FR-W2202-62, FR-W2303, FR-W2303-60, FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L, FR-W2501, FR-W2501-62"}, {"partNumber": "F6D-A-30W-R1-2750", "description": "LED Module", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "F6IN-120V-R1-30", "description": "LED Module, Luminaire Module", "usedIn": "Elf, Hydra 120, Hydra 80, Hydra 96, Vox 26, Vox 26 2, Vox 38, Windflower 60, Windflower 80", "modelNumbers": "FH-W1802-26, FH-W1802-38, FR-W1802, FR-W1802-26, FR-W1805-120, FR-W1805-80, FR-W1805-96, FR-W1815-60, FR-W1815-80"}, {"partNumber": "FH-W1802", "description": "Remote w/Wall Cradle", "usedIn": "Vox 26, Vox 38", "modelNumbers": "FH-W1802-26, FH-W1802-38"}, {"partNumber": "FH-W1803-44", "description": "Remote w/Wall Cradle", "usedIn": "Axis 44 Flush", "modelNumbers": "FH-W1803-44"}, {"partNumber": "FH-W1803-52", "description": "Remote w/Wall Cradle", "usedIn": "Axis 52 Flush", "modelNumbers": "FH-W1803-52"}, {"partNumber": "FH-W1811", "description": "Wall Control w/Hardware", "usedIn": "Aviator Flush", "modelNumbers": "FH-W1811"}, {"partNumber": "FH-W1811-5", "description": "Remote Control w/Hardware", "usedIn": "Aviator 5 Flush", "modelNumbers": "FH-W1811-5"}, {"partNumber": "FH-W2202-54L", "description": "Remote Control", "usedIn": "Skylark Flush", "modelNumbers": "FH-W2202"}, {"partNumber": "FH-W2502-52L", "description": "Remote Control", "usedIn": "Smooth Flush", "modelNumbers": "FH-W2502-52"}, {"partNumber": "FR-D2603", "description": "Wire Connectors", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "FR-W1801", "description": "Remote w/Wall Cradle", "usedIn": "Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60"}, {"partNumber": "FR-W1802", "description": "Remote w/Wall Cradle", "usedIn": "Elf, Vox 26 2", "modelNumbers": "FR-W1802, FR-W1802-26"}, {"partNumber": "FR-W1803-44", "description": "Remote Control", "usedIn": "Axis 44", "modelNumbers": "FR-W1803-44"}, {"partNumber": "FR-W1803-52", "description": "Remote Control", "usedIn": "Axis 52", "modelNumbers": "FR-W1803-52"}, {"partNumber": "FR-W1805", "description": "Wall Control w/ Hardware", "usedIn": "Hydra 120, Hydra 80, Hydra 96", "modelNumbers": "FR-W1805-120, FR-W1805-80, FR-W1805-96"}, {"partNumber": "FR-W1810", "description": "Remote Control W/ Hardware", "usedIn": "Vortex", "modelNumbers": "FR-W1810"}, {"partNumber": "FR-W1811", "description": "Remote Control", "usedIn": "Aviator, Aviator 54 5, Aviator 70", "modelNumbers": "FR-W1811, FR-W1811-54, FR-W1811-70"}, {"partNumber": "FR-W1813", "description": "Remote Control W/ Hardware", "usedIn": "Morpheus III", "modelNumbers": "FR-W1813"}, {"partNumber": "FR-W1814", "description": "Remote Control w/Wire Nuts", "usedIn": "Woody 60", "modelNumbers": "FR-W1814-60"}, {"partNumber": "FR-W1815", "description": "Wall Control w/ Hardware", "usedIn": "Windflower 60, Windflower 80", "modelNumbers": "FR-W1815-60, FR-W1815-80"}, {"partNumber": "FR-W1817", "description": "Remote w/Wall Cradle", "usedIn": "Osprey", "modelNumbers": "FR-W1817"}, {"partNumber": "FR-W1819", "description": "Remote w/Wall Cradle", "usedIn": "Mykonos", "modelNumbers": "FR-W1819"}, {"partNumber": "FR-W1910", "description": "Remote w/Wall Cradle", "usedIn": "Roboto 52, Roboto 62", "modelNumbers": "FR-W1910-52, FR-W1910-62"}, {"partNumber": "FR-W2001", "description": "Remote Control", "usedIn": "Renegade 52, Renegade 66", "modelNumbers": "FR-W2001-52, FR-W2001-66"}, {"partNumber": "FR-W2008", "description": "Remote w/Wall Cradle", "usedIn": "Mykonos 5", "modelNumbers": "FR-W2008"}, {"partNumber": "FR-W2101", "description": "Remote w/Wall Cradle", "usedIn": "Wynd XL", "modelNumbers": "FR-W2101"}, {"partNumber": "FR-W2202-54L", "description": "Remote Control", "usedIn": "Skylark 62", "modelNumbers": "FR-W2202-62"}, {"partNumber": "FR-W2202-62L", "description": "Remote Control", "usedIn": "Skylark 62", "modelNumbers": "FR-W2202-62"}, {"partNumber": "FR-W2204-58", "description": "Remote Control", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "FR-W2204-70", "description": "Remote Control", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "FR-W23011", "description": "Remote w/Wall Cradle", "usedIn": "Roboto XL / Roboto XL With Luminaire", "modelNumbers": "FR-W2301, FR-W2301L"}, {"partNumber": "FR-W2403", "description": "Remote w/Wall Cradle", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "FR-W2404-60L", "description": "Fan Assembly", "usedIn": "Spinster", "modelNumbers": "FR-W2404"}, {"partNumber": "FR-W2605", "description": "Wire Connectors", "usedIn": "Chill 2", "modelNumbers": "FR-W2605"}, {"partNumber": "RPL-CAN-CYL", "description": "Canopy & Canopy, Canopy & Canopy Ring, Canopy & Canopy Screw Ring, Canopy w/Canopy Ring, Hanging Bracket/Downrod Assembly", "usedIn": "Aura / Aura 60, Aviator, Aviator 54 5, Aviator 70, Axis 44, Axis 52, Chill 2, Elf, Osprey, Radiant 56 / Radiant 64, Renegade 52, Renegade 66, Roboto XL / Roboto XL With Luminaire, Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire, Smooth, Smooth 5, Vox 26 2, Windflower 60, Windflower 80, Wynd 42, Wynd 52, Wynd 60, Wyndmill", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60, FR-W1802, FR-W1802-26, FR-W1803-44, FR-W1803-52, FR-W1811, FR-W1811-54, FR-W1811-70, FR-W1815-60, FR-W1815-80, FR-W1817, FR-W2001-52, FR-W2001-66, FR-W2201, FR-W2301, FR-W2301L, FR-W2303, FR-W2303-60, FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L, FR-W2502, FR-W2601, FR-W2603-56, FR-W2603-64, FR-W2605"}, {"partNumber": "RPL-CAN-CYL-XL", "description": "Canopy & Canopy Ring", "usedIn": "Wynd XL", "modelNumbers": "FR-W2101"}, {"partNumber": "RPL-CAN-OCT", "description": "Canopy & Canopy Ring, Canopy & Canopy Screw Ring, Canopy W/Trim, Canopy w/Canopy Ring", "usedIn": "Bolo / Bolo 62, Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire, Crown, Pisces 5, Torque / Torque 70, Vortex, Zephyr 5, Zephyr 72", "modelNumbers": "FR-W1810, FR-W2006-72, FR-W2204, FR-W2204-70, FR-W2401, FR-W2501, FR-W2501-62, FR-W2503, FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L, FR-W2602"}, {"partNumber": "RPL-CAN-RND", "description": "Canopy & Canopy, Canopy & Canopy Ring, Canopy & Canopy Screw, Canopy w/Canopy Ring", "usedIn": "Morpheus III, Mykonos, Mykonos 5, Roboto 52, Roboto 62, Skylark 62, Woody 60", "modelNumbers": "FR-W1813, FR-W1814-60, FR-W1819, FR-W1910-52, FR-W1910-62, FR-W2008, FR-W2202-62"}, {"partNumber": "RPL-COU-CVR", "description": "Coupling Cover", "usedIn": "Axis 44, Axis 52, Elf, Hydra 120, Hydra 80, Hydra 96, Lotus, Osprey, Roboto 52, Roboto 62, Roboto XL / Roboto XL With Luminaire, Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire, Vortex, Vox 26 2, Windflower 60, Windflower 80, Woody 60, Wynd 42, Wynd 52, Wynd 60, Wynd XL, Wyndmill", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60, FR-W1802, FR-W1802-26, FR-W1803-44, FR-W1803-52, FR-W1805-120, FR-W1805-80, FR-W1805-96, FR-W1809, FR-W1810, FR-W1814-60, FR-W1815-60, FR-W1815-80, FR-W1817, FR-W1910-52, FR-W1910-62, FR-W2101, FR-W2201, FR-W2301, FR-W2301L, FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "RPL-COU-CVR-1819", "description": "Coupling Cover", "usedIn": "Mykonos", "modelNumbers": "FR-W1819"}, {"partNumber": "RPL-COU-CVR-2008", "description": "Coupling Cover", "usedIn": "Mykonos 5", "modelNumbers": "FR-W2008"}, {"partNumber": "RPL-F-1811", "description": "Blade Set of 5", "usedIn": "Aviator 5 Flush", "modelNumbers": "FH-W1811-5"}, {"partNumber": "RPL-F-2001-BARM", "description": "Blade Set of 8", "usedIn": "Renegade 52, Renegade 66", "modelNumbers": "FR-W2001-52, FR-W2001-66"}, {"partNumber": "RPL-F1801-42-BD", "description": "Blade Set of 5", "usedIn": "Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60"}, {"partNumber": "RPL-F1801-52-BD", "description": "Blade Set of 5", "usedIn": "Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60"}, {"partNumber": "RPL-F1801-60-BD", "description": "Blade Set of 5", "usedIn": "Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60"}, {"partNumber": "RPL-F1801-COVER", "description": "Luminaire Cover", "usedIn": "Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60"}, {"partNumber": "RPL-F1801-GLA", "description": "Acrylic Shade", "usedIn": "Wynd 42, Wynd 52, Wynd 60, Wynd XL", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60, FR-W2101"}, {"partNumber": "RPL-F1802", "description": "Blade Set of 5", "usedIn": "Elf, Vox 26, Vox 26 2, Vox 38", "modelNumbers": "FH-W1802-26, FH-W1802-38, FR-W1802, FR-W1802-26"}, {"partNumber": "RPL-F1802-GLA", "description": "Glass Shade", "usedIn": "Elf, Vox 26, Vox 26 2, Vox 38", "modelNumbers": "FH-W1802-26, FH-W1802-38, FR-W1802, FR-W1802-26"}, {"partNumber": "RPL-F1802-HGR", "description": "Mounting Plate", "usedIn": "Vox 26, Vox 38", "modelNumbers": "FH-W1802-26, FH-W1802-38"}, {"partNumber": "RPL-F1802-TRIM", "description": "Trim Ring Decorative", "usedIn": "Vox 26, Vox 38", "modelNumbers": "FH-W1802-26, FH-W1802-38"}, {"partNumber": "RPL-F1803", "description": "Blade Set of 3", "usedIn": "Axis 44, Axis 44 Flush, Axis 52, Axis 52 Flush", "modelNumbers": "FH-W1803-44, FH-W1803-52, FR-W1803-44, FR-W1803-52"}, {"partNumber": "RPL-F1803-GLA", "description": "Glass Shade", "usedIn": "Axis 44, Axis 44 Flush, Axis 52, Axis 52 Flush", "modelNumbers": "FH-W1803-44, FH-W1803-52, FR-W1803-44, FR-W1803-52"}, {"partNumber": "RPL-F1803-HGR", "description": "Hanger Plate", "usedIn": "Axis 44 Flush, Axis 52 Flush", "modelNumbers": "FH-W1803-44, FH-W1803-52"}, {"partNumber": "RPL-F1805", "description": "Blade Set of 8", "usedIn": "Hydra 120, Hydra 80, Hydra 96", "modelNumbers": "FR-W1805-120, FR-W1805-80, FR-W1805-96"}, {"partNumber": "RPL-F1805-BARM", "description": "Blade Arm Set of 8", "usedIn": "Hydra 120, Hydra 80, Hydra 96", "modelNumbers": "FR-W1805-120, FR-W1805-80, FR-W1805-96"}, {"partNumber": "RPL-F1805-CAN", "description": "Canopy & Canopy", "usedIn": "Hydra 120, Hydra 80, Hydra 96", "modelNumbers": "FR-W1805-120, FR-W1805-80, FR-W1805-96"}, {"partNumber": "RPL-F1805-COVER", "description": "Luminaire Cover", "usedIn": "Hydra 120, Hydra 80, Hydra 96", "modelNumbers": "FR-W1805-120, FR-W1805-80, FR-W1805-96"}, {"partNumber": "RPL-F1805-GLA", "description": "Glass Shade", "usedIn": "Hydra 120, Hydra 80, Hydra 96", "modelNumbers": "FR-W1805-120, FR-W1805-80, FR-W1805-96"}, {"partNumber": "RPL-F1805-HGR", "description": "Hanger Assembly", "usedIn": "Hydra 120, Hydra 80, Hydra 96", "modelNumbers": "FR-W1805-120, FR-W1805-80, FR-W1805-96"}, {"partNumber": "RPL-F1809-54-BD", "description": "Blade Set of 3", "usedIn": "Lotus", "modelNumbers": "FR-W1809"}, {"partNumber": "RPL-F1809-COVER", "description": "Glass Shade w/Trim", "usedIn": "Lotus", "modelNumbers": "FR-W1809"}, {"partNumber": "RPL-F1809-GLA", "description": "Glass Shade w/Trim", "usedIn": "Lotus", "modelNumbers": "FR-W1809"}, {"partNumber": "RPL-F1810-60-BD", "description": "Blade Set of 3", "usedIn": "Vortex", "modelNumbers": "FR-W1810"}, {"partNumber": "RPL-F1811", "description": "Blade Set of 5, Lower Cover Bottom Cap", "usedIn": "Aviator 54 5, Aviator 70", "modelNumbers": "FR-W1811-54, FR-W1811-70"}, {"partNumber": "RPL-F1811-5-CA", "description": "Bottom Cap (Aluminum)", "usedIn": "Aviator 5 Flush", "modelNumbers": "FH-W1811-5"}, {"partNumber": "RPL-F1811-54-BD", "description": "Blade Set of 3", "usedIn": "Aviator, Aviator Flush", "modelNumbers": "FH-W1811, FR-W1811"}, {"partNumber": "RPL-F1811-54-CA", "description": "Bottom Cap (Aluminum), Lower Cover Bottom Cap", "usedIn": "Aviator, Aviator Flush", "modelNumbers": "FH-W1811, FR-W1811"}, {"partNumber": "RPL-F1811-HANGER", "description": "Hanger Plate", "usedIn": "Aviator 5 Flush, Aviator Flush", "modelNumbers": "FH-W1811, FH-W1811-5"}, {"partNumber": "RPL-F1813-60-BD", "description": "Blade Set of 3", "usedIn": "Morpheus III", "modelNumbers": "FR-W1813"}, {"partNumber": "RPL-F1813-COVER", "description": "Luminaire Cover", "usedIn": "Morpheus III", "modelNumbers": "FR-W1813"}, {"partNumber": "RPL-F1813-GLA", "description": "Glass Shade", "usedIn": "Morpheus III", "modelNumbers": "FR-W1813"}, {"partNumber": "RPL-F1814", "description": "Blade Set of 3", "usedIn": "Woody 60", "modelNumbers": "FR-W1814-60"}, {"partNumber": "RPL-F1814-COVER", "description": "Luminaire Cover", "usedIn": "Woody 60", "modelNumbers": "FR-W1814-60"}, {"partNumber": "RPL-F1814-GLA", "description": "Glass Shade", "usedIn": "Woody 60", "modelNumbers": "FR-W1814-60"}, {"partNumber": "RPL-F1815", "description": "Blade Set of 12", "usedIn": "Windflower 60, Windflower 80", "modelNumbers": "FR-W1815-60, FR-W1815-80"}, {"partNumber": "RPL-F1815-COVER", "description": "Luminaire Cover", "usedIn": "Windflower 60, Windflower 80", "modelNumbers": "FR-W1815-60, FR-W1815-80"}, {"partNumber": "RPL-F1815-GLA", "description": "Glass Shade", "usedIn": "Windflower 60, Windflower 80", "modelNumbers": "FR-W1815-60, FR-W1815-80"}, {"partNumber": "RPL-F1817-56-BD", "description": "Blade Set of 3", "usedIn": "Osprey", "modelNumbers": "FR-W1817"}, {"partNumber": "RPL-F1817-GLA", "description": "Glass Shade w/Trim", "usedIn": "Osprey", "modelNumbers": "FR-W1817"}, {"partNumber": "RPL-F1819-52-BD", "description": "Blade Set of 3", "usedIn": "Mykonos", "modelNumbers": "FR-W1819"}, {"partNumber": "RPL-F1819-GLA", "description": "Glass Shade", "usedIn": "Mykonos", "modelNumbers": "FR-W1819"}, {"partNumber": "RPL-F1910", "description": "Blade Set of 3", "usedIn": "Roboto 62", "modelNumbers": "FR-W1910-62"}, {"partNumber": "RPL-F1910-52-BD", "description": "Blade Set of 3", "usedIn": "Roboto 52", "modelNumbers": "FR-W1910-52"}, {"partNumber": "RPL-F1910-62-BD", "description": "Blade Set of 3", "usedIn": "Roboto 52", "modelNumbers": "FR-W1910-52"}, {"partNumber": "RPL-F2001", "description": "Blade Set of 8", "usedIn": "Renegade 52, Renegade 66", "modelNumbers": "FR-W2001-52, FR-W2001-66"}, {"partNumber": "RPL-F2001-COVER", "description": "Luminaire Cover", "usedIn": "Renegade 52, Renegade 66", "modelNumbers": "FR-W2001-52, FR-W2001-66"}, {"partNumber": "RPL-F2001-GLA", "description": "Luminaire Glass", "usedIn": "Renegade 52, Renegade 66", "modelNumbers": "FR-W2001-52, FR-W2001-66"}, {"partNumber": "RPL-F2001-HGR", "description": "Downrod Assembly, Motor Assembly", "usedIn": "Renegade 52, Renegade 66", "modelNumbers": "FR-W2001-52, FR-W2001-66"}, {"partNumber": "RPL-F2006-72-BD", "description": "Blade Set of 3", "usedIn": "Zephyr 72", "modelNumbers": "FR-W2006-72"}, {"partNumber": "RPL-F2006-BLADERNG", "description": "Blade Collector Ring", "usedIn": "Zephyr 72", "modelNumbers": "FR-W2006-72"}, {"partNumber": "RPL-F2006-COVER", "description": "Luminaire Cover", "usedIn": "Zephyr 72", "modelNumbers": "FR-W2006-72"}, {"partNumber": "RPL-F2006-GLA", "description": "Glass Shade", "usedIn": "Zephyr 72", "modelNumbers": "FR-W2006-72"}, {"partNumber": "RPL-F2008-60-BD", "description": "Blade Set of 3", "usedIn": "Mykonos 5", "modelNumbers": "FR-W2008"}, {"partNumber": "RPL-F2008-GLA", "description": "Glass Shade", "usedIn": "Mykonos 5", "modelNumbers": "FR-W2008"}, {"partNumber": "RPL-F2101-72-BD", "description": "Blade Set of 9", "usedIn": "Wynd XL", "modelNumbers": "FR-W2101"}, {"partNumber": "RPL-F2101-COVER", "description": "Luminaire Cover", "usedIn": "Wynd XL", "modelNumbers": "FR-W2101"}, {"partNumber": "RPL-F2201-65-BD", "description": "Blades", "usedIn": "Wyndmill", "modelNumbers": "FR-W2201"}, {"partNumber": "RPL-F2201-ADP", "description": "Adapter Plate", "usedIn": "Wyndmill", "modelNumbers": "FR-W2201"}, {"partNumber": "RPL-F2201-BARM", "description": "Blade Arms", "usedIn": "Wyndmill", "modelNumbers": "FR-W2201"}, {"partNumber": "RPL-F2201-GLA", "description": "Acrylic Shade, Adapter Plate", "usedIn": "Wyndmill", "modelNumbers": "FR-W2201"}, {"partNumber": "RPL-F2202-54-BD", "description": "Blade Set of 3, Fan Blades", "usedIn": "Skylark 54, Skylark 62, Skylark Flush", "modelNumbers": "FH-W2202, FH-W2202-54, FR-W2202-62"}, {"partNumber": "RPL-F2202-62-BD", "description": "Blade Set of 3", "usedIn": "Skylark 62", "modelNumbers": "FR-W2202-62"}, {"partNumber": "RPL-F2202-ADP", "description": "Adapter Plate", "usedIn": "Skylark 54, Skylark 62, Skylark Flush", "modelNumbers": "FH-W2202, FH-W2202-54, FR-W2202-62"}, {"partNumber": "RPL-F2202-GLA", "description": "PC Shade", "usedIn": "Skylark 54, Skylark 62, Skylark Flush", "modelNumbers": "FH-W2202, FH-W2202-54, FR-W2202-62"}, {"partNumber": "RPL-F2202-HANGER", "description": "Mounting Bracket", "usedIn": "Skylark 54, Skylark Flush", "modelNumbers": "FH-W2202, FH-W2202-54"}, {"partNumber": "RPL-F2202-P", "description": "Adapter Plate", "usedIn": "Skylark Flush", "modelNumbers": "FH-W2202"}, {"partNumber": "RPL-F2202-PARTS", "description": "Adapter Plate, Motor Assembly", "usedIn": "Skylark 54, Skylark 62", "modelNumbers": "FH-W2202-54, FR-W2202-62"}, {"partNumber": "RPL-F2202-TRIM", "description": "Decorative Trim Ring", "usedIn": "Skylark 54, Skylark Flush", "modelNumbers": "FH-W2202, FH-W2202-54"}, {"partNumber": "RPL-F2202COUCVR", "description": "Coupling Cover", "usedIn": "Skylark 62", "modelNumbers": "FR-W2202-62"}, {"partNumber": "RPL-F2204-58-BD", "description": "Blade Set of 3", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "RPL-F2204-70-BD", "description": "Blade Set of 3", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "RPL-F2204-HEX", "description": "Remote Control", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "RPL-F2204CAPASM", "description": "Decorative Bottom Cap", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "RPL-F2204COUCVR", "description": "Coupling Cover", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "RPL-F2204DECASM", "description": "Decorative Bottom Assembly", "usedIn": "Torque / Torque 70", "modelNumbers": "FR-W2204, FR-W2204-70"}, {"partNumber": "RPL-F2301-70-BD", "description": "Blade Set", "usedIn": "Roboto XL / Roboto XL With Luminaire", "modelNumbers": "FR-W2301, FR-W2301L"}, {"partNumber": "RPL-F2301-ADP", "description": "Adapter Plate", "usedIn": "Roboto XL / Roboto XL With Luminaire", "modelNumbers": "FR-W2301, FR-W2301L"}, {"partNumber": "RPL-F2301-BARMS", "description": "Blade Arms", "usedIn": "Roboto XL / Roboto XL With Luminaire", "modelNumbers": "FR-W2301, FR-W2301L"}, {"partNumber": "RPL-F2301-COVER", "description": "Luminaire Cover", "usedIn": "Roboto XL / Roboto XL With Luminaire", "modelNumbers": "FR-W2301, FR-W2301L"}, {"partNumber": "RPL-F2301-GLA", "description": "PC Shade/Luminaire Kit", "usedIn": "Roboto XL / Roboto XL With Luminaire", "modelNumbers": "FR-W2301, FR-W2301L"}, {"partNumber": "RPL-F2303-60-BD", "description": "Blade Set of 8", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "RPL-F2303-72-BD", "description": "Blade Set of 8", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "RPL-F2303-ADP", "description": "Adapter Plate", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "RPL-F2303-CEN-RING", "description": "Clear Central Ring", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "RPL-F2303-GLA", "description": "Acrylic Shade", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "RPL-F2303BLDHDER", "description": "Blade Holder Adapter", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "RPL-F2303BRACK", "description": "Decorative Blade Bracket", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "RPL-F2303COUCVR", "description": "Coupling Cover", "usedIn": "Aura / Aura 60", "modelNumbers": "FR-W2303, FR-W2303-60"}, {"partNumber": "RPL-F2401-62-BD", "description": "Blade Set of 5", "usedIn": "Zephyr 5", "modelNumbers": "FR-W2401"}, {"partNumber": "RPL-F2401-BLADERNG", "description": "Blade Collector Ring", "usedIn": "Zephyr 5", "modelNumbers": "FR-W2401"}, {"partNumber": "RPL-F2403-65-BD", "description": "Blade Set of 8", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "RPL-F2403-84-BD", "description": "Blade Set of 8", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "RPL-F2403-BARM", "description": "Blade Arm Assembly", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "RPL-F2403-COVER", "description": "Luminaire Cover", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "RPL-F2403-GLA", "description": "Luminaire Assembly", "usedIn": "Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire", "modelNumbers": "FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L"}, {"partNumber": "RPL-F2501-56-BD", "description": "Blades", "usedIn": "Bolo / Bolo 62", "modelNumbers": "FR-W2501, FR-W2501-62"}, {"partNumber": "RPL-F2501-ADP", "description": "Adapter Plate", "usedIn": "Bolo / Bolo 62", "modelNumbers": "FR-W2501, FR-W2501-62"}, {"partNumber": "RPL-F2501-COVER", "description": "Luminaire Cover", "usedIn": "Bolo / Bolo 62", "modelNumbers": "FR-W2501, FR-W2501-62"}, {"partNumber": "RPL-F2501-GLA", "description": "Acrylic Shade", "usedIn": "Bolo / Bolo 62", "modelNumbers": "FR-W2501, FR-W2501-62"}, {"partNumber": "RPL-F2502-52-BD", "description": "Blades, Fan Blades", "usedIn": "Smooth, Smooth Flush", "modelNumbers": "FH-W2502-52, FR-W2502"}, {"partNumber": "RPL-F2502-ADP", "description": "Adapter Plate for Luminaire", "usedIn": "Smooth, Smooth Flush", "modelNumbers": "FH-W2502-52, FR-W2502"}, {"partNumber": "RPL-F2502-ADPBC-MB", "description": "Adapter Plate for Cover", "usedIn": "Smooth, Smooth Flush", "modelNumbers": "FH-W2502-52, FR-W2502"}, {"partNumber": "RPL-F2502-COVER", "description": "Bottom Cover", "usedIn": "Smooth, Smooth Flush", "modelNumbers": "FH-W2502-52, FR-W2502"}, {"partNumber": "RPL-F2502-GLA", "description": "PC Shade", "usedIn": "Smooth, Smooth Flush", "modelNumbers": "FH-W2502-52, FR-W2502"}, {"partNumber": "RPL-F2502-HANGER", "description": "Mounting Bracket", "usedIn": "Smooth Flush", "modelNumbers": "FH-W2502-52"}, {"partNumber": "RPL-F2502-TRIM", "description": "Decorative Trim Ring", "usedIn": "Smooth Flush", "modelNumbers": "FH-W2502-52"}, {"partNumber": "RPL-F2503-54-BD", "description": "Blades", "usedIn": "Pisces 5", "modelNumbers": "FR-W2503"}, {"partNumber": "RPL-F2503-GLA", "description": "Alabaster Shade", "usedIn": "Pisces 5", "modelNumbers": "FR-W2503"}, {"partNumber": "RPL-F2504-60-BD", "description": "Blade Set of 3", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "RPL-F2504-72-BD", "description": "Blade Set of 3", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "RPL-F2504-ADP", "description": "Luminaire Adapter Plate", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "RPL-F2504-GLA", "description": "Acrylic Shade", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "RPL-F2504-HLD", "description": "Magnetic Adapter Plate", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "RPL-F2504BLDCAP", "description": "Flat Cover", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "RPL-F2504COUCVR", "description": "Coupling Cover", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "RPL-F2504INDCAP", "description": "Industrial Cover", "usedIn": "Carve 60 / Carve 60 With Luminaire, Carve 72 / Carve 72 With Luminaire", "modelNumbers": "FR-W2504-60, FR-W2504-60L, FR-W2504-72, FR-W2504-72L"}, {"partNumber": "RPL-F2601-56-BD", "description": "Blades", "usedIn": "Smooth 5", "modelNumbers": "FR-W2601"}, {"partNumber": "RPL-F2601-ADP", "description": "Adapter Plate for Luminaire", "usedIn": "Smooth 5", "modelNumbers": "FR-W2601"}, {"partNumber": "RPL-F2601-ADPBC-MB", "description": "Adapter Plate for Cover", "usedIn": "Smooth 5", "modelNumbers": "FR-W2601"}, {"partNumber": "RPL-F2601-COVER", "description": "Bottom Cover", "usedIn": "Smooth 5", "modelNumbers": "FR-W2601"}, {"partNumber": "RPL-F2601-GLA", "description": "PC Shade", "usedIn": "Smooth 5", "modelNumbers": "FR-W2601"}, {"partNumber": "RPL-F2602-62-BD", "description": "Blades (Set of 5)", "usedIn": "Crown", "modelNumbers": "FR-W2602"}, {"partNumber": "RPL-F2602-ADP-SB", "description": "Adapter Plate", "usedIn": "Crown", "modelNumbers": "FR-W2602"}, {"partNumber": "RPL-F2602-GLA-D", "description": "Alabaster Down Light", "usedIn": "Crown", "modelNumbers": "FR-W2602"}, {"partNumber": "RPL-F2602-GLA-U", "description": "Alabaster Up-Light", "usedIn": "Crown", "modelNumbers": "FR-W2602"}, {"partNumber": "RPL-F2602-LENS-U", "description": "Uplight Lens", "usedIn": "Crown", "modelNumbers": "FR-W2602"}, {"partNumber": "RPL-F2603", "description": "Down Light Diffuser", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "RPL-F2603-56-BD", "description": "Blade Set of 5", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "RPL-F2603-64-BD", "description": "Blade Set of 5", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "RPL-F2603-ADP", "description": "Adapter Plate", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "RPL-F2603-ALA", "description": "Down Light Diffuser", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "RPL-F2603-CS", "description": "Down Light Diffuser", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "RPL-F2603-LENS-U", "description": "Up-Light Diffuser", "usedIn": "Radiant 56 / Radiant 64", "modelNumbers": "FR-W2603-56, FR-W2603-64"}, {"partNumber": "RPL-F2605-54-BD", "description": "Blade Set of 3", "usedIn": "Chill 2", "modelNumbers": "FR-W2605"}, {"partNumber": "RPL-F2605-ADP", "description": "Luminaire Adapter Plate", "usedIn": "Chill 2", "modelNumbers": "FR-W2605"}, {"partNumber": "RPL-F2605-COVER", "description": "Luminaire Cover", "usedIn": "Chill 2", "modelNumbers": "FR-W2605"}, {"partNumber": "RPL-F2605-GLA", "description": "Acrylic Diffuser", "usedIn": "Chill 2", "modelNumbers": "FR-W2605"}, {"partNumber": "RPL-F2605ADPCVR", "description": "Luminaire Cover Adapter Plate", "usedIn": "Chill 2", "modelNumbers": "FR-W2605"}, {"partNumber": "RPL-FH1803-COVER", "description": "Luminaire Cover", "usedIn": "Axis 44 Flush, Axis 52 Flush", "modelNumbers": "FH-W1803-44, FH-W1803-52"}, {"partNumber": "RPL-FH1803-TRIM", "description": "Trim Ring - Decorative", "usedIn": "Axis 44 Flush, Axis 52 Flush", "modelNumbers": "FH-W1803-44, FH-W1803-52"}, {"partNumber": "RPL-FH2202-PARTS", "description": "Adapter Plate for Cover", "usedIn": "Smooth Flush", "modelNumbers": "FH-W2502-52"}, {"partNumber": "RPL-FR1803-COVER", "description": "Luminaire Cover", "usedIn": "Axis 44, Axis 52", "modelNumbers": "FR-W1803-44, FR-W1803-52"}, {"partNumber": "RPL-HGR-ASM", "description": "Downrod Assembly, Hanger Assembly, Mounting Bracket, Mounting Bracket Downrod", "usedIn": "Aviator, Aviator 54 5, Aviator 70, Axis 44, Axis 52, Elf, Lotus, Morpheus III, Mykonos, Mykonos 5, Osprey, Renegade 52, Renegade 66, Roboto 52, Roboto 62, Skylark 62, Torque / Torque 70, Vortex, Vox 26 2, Windflower 60, Windflower 80, Woody 60, Wynd 42, Wynd 52, Wynd 60", "modelNumbers": "FR-W1801-42, FR-W1801-52, FR-W1801-60, FR-W1802, FR-W1802-26, FR-W1803-44, FR-W1803-52, FR-W1809, FR-W1810, FR-W1811, FR-W1811-54, FR-W1811-70, FR-W1813, FR-W1814-60, FR-W1815-60, FR-W1815-80, FR-W1817, FR-W1819, FR-W1910-52, FR-W1910-62, FR-W2001-52, FR-W2001-66, FR-W2008, FR-W2202-62, FR-W2204, FR-W2204-70"}, {"partNumber": "RPL-HGR-ASM-6", "description": "Hanger Assembly, Hanger Bracket, Hanging Bracket/Downrod, Mounting Arms", "usedIn": "Aura / Aura 60, Bolo / Bolo 62, Crown, Pisces 5, Roboto XL / Roboto XL With Luminaire, Size Matters 65 / 65 With Luminaire, Size Matters 84 / 84 With Luminaire, Smooth, Smooth 5, Wyndmill", "modelNumbers": "FR-W2201, FR-W2301, FR-W2301L, FR-W2303, FR-W2303-60, FR-W2403-65, FR-W2403-65L, FR-W2403-84, FR-W2403-84L, FR-W2501, FR-W2501-62, FR-W2502, FR-W2503, FR-W2601, FR-W2602"}, {"partNumber": "RPL-HGR-ASM-8", "description": "Hanger Assembly", "usedIn": "Torque / Torque 70, Zephyr 5, Zephyr 72", "modelNumbers": "FR-W2006-72, FR-W2204, FR-W2204-70, FR-W2401"}, {"partNumber": "RPL-HGR-ASM-XL", "description": "Mounting Bracket Downrod", "usedIn": "Wynd XL", "modelNumbers": "FR-W2101"}, {"partNumber": "RPL-LOTUS-PARTS", "description": "Coupling Cover", "usedIn": "Lotus", "modelNumbers": "FR-W1809"}, {"partNumber": "RPL-SMOOTH-RDA", "description": "Rippled Acrylic Shade", "usedIn": "Smooth 5", "modelNumbers": "FR-W2601"}]};
+
+const fans = DATA.fans;
+const partIndex = DATA.partIndex;
+
+document.getElementById('fan-count').textContent = fans.length;
+document.getElementById('part-count').textContent = partIndex.length;
+
+const searchEl = document.getElementById('search');
+const resultsEl = document.getElementById('results');
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function highlightMatch(text, query) {
+  if (!query || !text) return escapeHtml(text);
+  const escaped = escapeHtml(text);
+  const regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return escaped.replace(regex, '<mark>$1</mark>');
+}
+
+function searchFans(query) {
+  const q = query.toLowerCase().trim();
+  if (!q) return { fanResults: [], partResults: [] };
+
+  // Search fans by name and model number
+  const fanResults = fans.filter(fan => {
+    if (fan.name.toLowerCase().includes(q)) return true;
+    if (fan.modelNumbers.some(mn => mn.toLowerCase().includes(q))) return true;
+    // Also match if any part number matches
+    if (fan.parts.some(p => p.partNumber.toLowerCase().includes(q))) return true;
+    return false;
+  });
+
+  // Search part index for reverse lookup
+  const partResults = partIndex.filter(p => {
+    return p.partNumber.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
+  });
+
+  return { fanResults, partResults };
+}
+
+function renderResults(query) {
+  const q = query.trim();
+  if (!q) {
+    resultsEl.innerHTML = '';
+    return;
+  }
+
+  const { fanResults, partResults } = searchFans(q);
+
+  if (fanResults.length === 0 && partResults.length === 0) {
+    resultsEl.innerHTML = `
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <h3>No results found</h3>
+        <p>Try a different fan name, model number, or part number</p>
+      </div>`;
+    return;
+  }
+
+  let html = '';
+
+  // Reverse part matches
+  partResults.forEach((p, i) => {
+    html += `
+    <div class="reverse-match" style="animation-delay:${i * 0.05}s">
+      <div class="reverse-match-title">Part Number Match</div>
+      <h4>${highlightMatch(p.partNumber, q)}</h4>
+      <div class="rm-desc">${highlightMatch(p.description, q)}</div>
+      <div class="rm-models">Used in: ${escapeHtml(p.usedIn)}</div>
+    </div>`;
+  });
+
+  // Fan cards
+  fanResults.forEach((fan, i) => {
+    const open = fanResults.length === 1 ? ' open' : '';
+    html += `
+    <div class="fan-card${open}" style="animation-delay:${(partResults.length + i) * 0.05}s">
+      <div class="fan-header" onclick="this.parentElement.classList.toggle('open')">
+        <div class="fan-header-left">
+          <div class="fan-name">${highlightMatch(fan.name, q)}</div>
+          <div class="fan-model-nums">${fan.modelNumbers.map(m => highlightMatch(m, q)).join(' &middot; ')}</div>
+        </div>
+        <div class="fan-header-right">
+          <span class="parts-badge">${fan.parts.length} parts</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="fan-body">
+        ${fan.productUrl ? `<a class="product-link" href="${escapeHtml(fan.productUrl)}" target="_blank" rel="noopener">View on ModernForms.com <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>` : ''}
+        <table class="parts-table">
+          <thead><tr><th>Part Name</th><th>Part Number</th></tr></thead>
+          <tbody>
+            ${fan.parts.map(p => `
+              <tr>
+                <td class="part-name">${highlightMatch(p.name, q)}</td>
+                <td>${p.partNumber ? `<span class="part-number">${highlightMatch(p.partNumber, q)}</span>` : '<span class="no-pn">N/A</span>'}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+
+  resultsEl.innerHTML = html;
+}
+
+// Debounced search
+let timer;
+searchEl.addEventListener('input', () => {
+  clearTimeout(timer);
+  timer = setTimeout(() => renderResults(searchEl.value), 150);
+});
+
+// Keyboard shortcut: / to focus search
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== searchEl) {
+    e.preventDefault();
+    searchEl.focus();
+  }
+});
+</script>
+</body>
+</html>
