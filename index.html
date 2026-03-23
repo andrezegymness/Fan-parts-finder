@@ -691,6 +691,14 @@ mark {
 
 <!-- Floating Action Buttons -->
 <div class="fab-group">
+  <button class="fab-pdf" onclick="importData()" title="Import data from another browser or device">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Import Data
+  </button>
+  <button class="fab-pdf" onclick="exportData()" title="Export all your custom fans and edits as a file">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export Data
+  </button>
   <button class="fab-pdf" onclick="exportToPDF()">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
     Export PDF
@@ -891,6 +899,75 @@ function saveAddedPart(fanResultIdx) {
 function cancelAddedPart(fanResultIdx) {
   const row = document.getElementById(`add-part-row-${fanResultIdx}`);
   if (row) row.remove();
+}
+
+// ── Sync parts to family ──────────────────────────────────────────
+function syncToFamily(fanResultIdx) {
+  const fan = _lastFanResults[fanResultIdx];
+  if (!fan || !fan.modelNumbers.length) return;
+  const siblings = getModelFamily(fan).filter(f => f.name !== fan.name);
+  if (!siblings.length) return;
+  const srcSuffix = getModelSuffix(fan.modelNumbers[0]);
+  const added = loadAdded();
+  siblings.forEach(sibling => {
+    const dstSuffix = getModelSuffix(sibling.modelNumbers[0]);
+    fan.parts.forEach(part => {
+      // Skip placeholder dashes from original data
+      if (part.name === '\u2014' || part.name === '-') return;
+      // Skip if sibling already has a part with this exact name
+      if (sibling.parts.some(p => p.name === part.name)) return;
+      // Replace source size suffix with destination size suffix throughout the part number
+      const newPn = part.partNumber
+        ? part.partNumber.replace(new RegExp(srcSuffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), dstSuffix)
+        : '';
+      const newPart = { name: part.name, partNumber: newPn };
+      sibling.parts.push(newPart);
+      if (!added[sibling.name]) added[sibling.name] = [];
+      added[sibling.name].push(newPart);
+    });
+  });
+  saveAdded(added);
+  renderResults(searchEl.value);
+}
+
+// ── Export / Import data ──────────────────────────────────────────
+function exportData() {
+  const payload = {
+    fanPartsEdits:  loadEdits(),
+    fanPartsAdded:  loadAdded(),
+    customFans:     loadCustomFans(),
+    fanModelEdits:  loadModelEdits(),
+    exportedAt:     new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'fan-parts-data.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const d = JSON.parse(ev.target.result);
+        if (d.fanPartsEdits) saveEdits(d.fanPartsEdits);
+        if (d.fanPartsAdded) saveAdded(d.fanPartsAdded);
+        if (d.customFans)    saveCustomFans(d.customFans);
+        if (d.fanModelEdits) saveModelEdits(d.fanModelEdits);
+        location.reload();
+      } catch(err) {
+        alert('Could not read file — make sure it\'s a valid fan-parts-data.json.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 // ── Add New Fan modal ─────────────────────────────────────────────
@@ -1266,6 +1343,13 @@ function renderResults(query) {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Part
         </button>
+        ${(() => {
+          const siblings = getModelFamily(fan).filter(f => f.name !== fan.name);
+          return siblings.length ? `<button class="add-part-btn sync-family-btn" onclick="syncToFamily(${i})" style="border-color:var(--accent);color:var(--accent)" title="Copy all parts from this fan to ${siblings.map(s=>s.name).join(', ')}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+            Sync parts to: ${siblings.map(s => s.name).join(', ')}
+          </button>` : '';
+        })()}
       </div>
     </div>`;
   });
