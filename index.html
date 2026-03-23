@@ -476,9 +476,6 @@ header .stat .label {
 
 /* FLOATING ADD FAN BUTTON */
 .fab {
-  position: fixed;
-  bottom: 32px;
-  right: 32px;
   background: var(--accent);
   color: #0c0e12;
   border: none;
@@ -493,10 +490,9 @@ header .stat .label {
   padding: 14px 22px;
   box-shadow: 0 4px 20px rgba(78,205,196,0.35);
   transition: transform 0.15s, box-shadow 0.15s;
-  z-index: 50;
 }
 .fab:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(78,205,196,0.45); }
-@media (max-width: 600px) { .fab { bottom: 20px; right: 20px; padding: 12px 18px; } }
+@media (max-width: 600px) { .fab { padding: 12px 18px; } }
 
 /* EMPTY STATE */
 .empty-state {
@@ -564,6 +560,102 @@ mark {
   .parts-table th, .parts-table td { padding: 10px 16px; }
   .product-link { padding: 10px 16px; }
 }
+
+/* COPY BUTTON */
+.copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim);
+  padding: 4px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+.parts-table tr:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { color: var(--accent); background: var(--accent-glow); }
+.copy-btn.copied { color: #4ade80; opacity: 1; }
+
+/* MODEL NUMBER EDIT BUTTON */
+.model-edit-btn { opacity: 0; margin-left: 6px; }
+.fan-header:hover .model-edit-btn { opacity: 1; }
+
+/* DID YOU MEAN */
+.did-you-mean-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+.suggestion-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 7px 16px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.suggestion-btn:hover { background: var(--surface-hover); border-color: var(--accent); }
+.suggestion-label { font-size: 13px; color: var(--text-dim); margin-top: 12px; margin-bottom: 4px; }
+
+/* FAB GROUP */
+.fab-group {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  z-index: 50;
+}
+.fab-pdf {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 11px 18px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  transition: transform 0.15s, color 0.15s, border-color 0.15s;
+}
+.fab-pdf:hover { transform: translateY(-2px); color: var(--accent); border-color: var(--accent); }
+@media (max-width: 600px) { .fab-group { bottom: 20px; right: 20px; } }
+
+/* PRINT STYLES */
+@media print {
+  body::before { display: none; }
+  .fab-group, .add-part-btn, .edit-btn, .copy-btn, .model-edit-btn,
+  .modal-backdrop, .search-wrap, .search-hint { display: none !important; }
+  #results { padding-bottom: 0; }
+  .fan-card { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 12px; }
+  .fan-body { display: block !important; }
+  .fan-header { background: #f5f5f5 !important; cursor: default; }
+  .fan-name { color: #000; -webkit-text-fill-color: #000; }
+  .fan-model-nums { color: #0078a0; }
+  .parts-table th { color: #555; background: #eee; }
+  .parts-table td { color: #000; border-top: 1px solid #ddd; }
+  .part-number { color: #c0400a; }
+  header h1 { -webkit-text-fill-color: #000; }
+  .stat .num { -webkit-text-fill-color: #0078a0; }
+  body { background: #fff !important; color: #000 !important; }
+  .container { max-width: 100%; }
+  .chevron { display: none; }
+}
 </style>
 </head>
 <body>
@@ -597,11 +689,17 @@ mark {
   <div id="results"></div>
 </div>
 
-<!-- Floating Add Fan Button -->
-<button class="fab" onclick="openAddFanModal()">
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  Add Fan
-</button>
+<!-- Floating Action Buttons -->
+<div class="fab-group">
+  <button class="fab-pdf" onclick="exportToPDF()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    Export PDF
+  </button>
+  <button class="fab" onclick="openAddFanModal()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Fan
+  </button>
+</div>
 
 <!-- Add New Fan Modal -->
 <div class="modal-backdrop" id="fan-modal" onclick="if(event.target===this)closeAddFanModal()">
@@ -662,18 +760,22 @@ function buildPartIndex(fans) {
 const partIndex = buildPartIndex(fans);
 
 // ── localStorage helpers ──────────────────────────────────────────
-const EDITS_KEY      = 'fanPartsEdits';
-const ADDED_KEY      = 'fanPartsAdded';
-const CUSTOM_FANS_KEY = 'customFans';
+const EDITS_KEY        = 'fanPartsEdits';
+const ADDED_KEY        = 'fanPartsAdded';
+const CUSTOM_FANS_KEY  = 'customFans';
+const MODEL_EDITS_KEY  = 'fanModelEdits';
 
-function loadEdits()  { try { return JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) { return {}; } }
-function saveEdits(v) { localStorage.setItem(EDITS_KEY, JSON.stringify(v)); }
+function loadEdits()      { try { return JSON.parse(localStorage.getItem(EDITS_KEY) || '{}'); } catch(e) { return {}; } }
+function saveEdits(v)     { localStorage.setItem(EDITS_KEY, JSON.stringify(v)); }
 
-function loadAdded()  { try { return JSON.parse(localStorage.getItem(ADDED_KEY) || '{}'); } catch(e) { return {}; } }
-function saveAdded(v) { localStorage.setItem(ADDED_KEY, JSON.stringify(v)); }
+function loadAdded()      { try { return JSON.parse(localStorage.getItem(ADDED_KEY) || '{}'); } catch(e) { return {}; } }
+function saveAdded(v)     { localStorage.setItem(ADDED_KEY, JSON.stringify(v)); }
 
-function loadCustomFans()  { try { return JSON.parse(localStorage.getItem(CUSTOM_FANS_KEY) || '[]'); } catch(e) { return []; } }
-function saveCustomFans(v) { localStorage.setItem(CUSTOM_FANS_KEY, JSON.stringify(v)); }
+function loadCustomFans() { try { return JSON.parse(localStorage.getItem(CUSTOM_FANS_KEY) || '[]'); } catch(e) { return []; } }
+function saveCustomFans(v){ localStorage.setItem(CUSTOM_FANS_KEY, JSON.stringify(v)); }
+
+function loadModelEdits() { try { return JSON.parse(localStorage.getItem(MODEL_EDITS_KEY) || '{}'); } catch(e) { return {}; } }
+function saveModelEdits(v){ localStorage.setItem(MODEL_EDITS_KEY, JSON.stringify(v)); }
 
 // Apply all stored data to in-memory fans array
 (function applyStoredData() {
@@ -694,6 +796,11 @@ function saveCustomFans(v) { localStorage.setItem(CUSTOM_FANS_KEY, JSON.stringif
   // 3. Append custom fans
   const custom = loadCustomFans();
   fans.push(...custom);
+  // 4. Apply model number edits
+  const modelEdits = loadModelEdits();
+  fans.forEach(fan => {
+    if (modelEdits[fan.name] !== undefined) fan.modelNumbers = modelEdits[fan.name];
+  });
 })();
 
 // ── Add Part to existing fan ──────────────────────────────────────
@@ -889,6 +996,134 @@ function cancelEdit(fanResultIdx, partIdx) {
   renderResults(searchEl.value);
 }
 
+// ── Model Number Edit ─────────────────────────────────────────────
+function startEditModel(fanIdx) {
+  const fan = _lastFanResults[fanIdx];
+  if (!fan) return;
+  const cell = document.getElementById(`mn-cell-${fanIdx}`);
+  if (!cell || cell.dataset.editing) return;
+  cell.dataset.editing = '1';
+  const current = fan.modelNumbers.join(', ');
+  cell.innerHTML = `
+    <input class="edit-input" id="mn-input-${fanIdx}" type="text" value="${escapeHtml(current)}" placeholder="e.g. FR-W2605, FR-W2605-52" style="width:220px" />
+    <span class="edit-actions">
+      <button class="edit-save" onclick="saveEditModel(${fanIdx})">Save</button>
+      <button class="edit-cancel" onclick="cancelEditModel(${fanIdx})">Cancel</button>
+    </span>`;
+  const inp = document.getElementById(`mn-input-${fanIdx}`);
+  inp.focus(); inp.select();
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveEditModel(fanIdx);
+    if (e.key === 'Escape') cancelEditModel(fanIdx);
+  });
+}
+
+function saveEditModel(fanIdx) {
+  const fan = _lastFanResults[fanIdx];
+  if (!fan) return;
+  const inp = document.getElementById(`mn-input-${fanIdx}`);
+  if (!inp) return;
+  const newVal = inp.value.trim().split(',').map(s => s.trim()).filter(Boolean);
+  if (newVal.length === 0) { cancelEditModel(fanIdx); return; }
+  fan.modelNumbers = newVal;
+  const modelEdits = loadModelEdits();
+  modelEdits[fan.name] = newVal;
+  saveModelEdits(modelEdits);
+  renderResults(searchEl.value);
+}
+
+function cancelEditModel(fanIdx) {
+  renderResults(searchEl.value);
+}
+
+// ── Copy to Clipboard ─────────────────────────────────────────────
+function copyToClipboard(text, btn) {
+  const doFeedback = () => {
+    if (!btn) return;
+    btn.classList.add('copied');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1500);
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(doFeedback).catch(() => {
+      legacyCopy(text); doFeedback();
+    });
+  } else {
+    legacyCopy(text); doFeedback();
+  }
+}
+function legacyCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+}
+
+// ── Fuzzy Search ──────────────────────────────────────────────────
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m + 1}, (_, i) =>
+    Array.from({length: n + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function getFuzzySuggestions(query) {
+  const q = query.toLowerCase().trim();
+  const maxDist = Math.max(2, Math.floor(q.length * 0.35));
+  const seen = new Set();
+  const results = [];
+  fans.forEach(fan => {
+    [fan.name, ...fan.modelNumbers].forEach(label => {
+      if (seen.has(label)) return;
+      const dist = levenshtein(q, label.toLowerCase());
+      if (dist <= maxDist) { seen.add(label); results.push({ label, dist }); }
+    });
+  });
+  return results.sort((a, b) => a.dist - b.dist).slice(0, 5).map(r => r.label);
+}
+
+// ── PDF Export ────────────────────────────────────────────────────
+function exportToPDF() {
+  const prev = searchEl.value;
+  let html = '';
+  fans.forEach((fan, i) => {
+    html += `
+    <div class="fan-card open" style="animation:none">
+      <div class="fan-header" style="cursor:default">
+        <div class="fan-header-left">
+          <div class="fan-name">${escapeHtml(fan.name)}</div>
+          <div class="fan-model-nums">${fan.modelNumbers.map(m => escapeHtml(m)).join(' · ')}</div>
+        </div>
+        <div class="fan-header-right">
+          <span class="parts-badge">${fan.parts.length} parts</span>
+        </div>
+      </div>
+      <div class="fan-body">
+        ${fan.productUrl ? `<a class="product-link" href="${escapeHtml(fan.productUrl)}" target="_blank">${escapeHtml(fan.productUrl)}</a>` : ''}
+        <table class="parts-table">
+          <thead><tr><th>Part Name</th><th>Part Number</th></tr></thead>
+          <tbody>${fan.parts.map(p => `<tr>
+            <td class="part-name">${escapeHtml(p.name)}</td>
+            <td>${p.partNumber ? `<span class="part-number">${escapeHtml(p.partNumber)}</span>` : '<span class="no-pn">N/A</span>'}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+  resultsEl.innerHTML = html;
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => renderResults(prev), 800);
+  }, 150);
+}
+
 function renderResults(query) {
   const q = query.trim();
   if (!q) {
@@ -899,11 +1134,18 @@ function renderResults(query) {
   const { fanResults, partResults } = searchFans(q);
 
   if (fanResults.length === 0 && partResults.length === 0) {
+    const suggestions = getFuzzySuggestions(q);
+    const suggestHtml = suggestions.length > 0
+      ? `<p class="suggestion-label">Did you mean?</p>
+         <div class="did-you-mean-suggestions">
+           ${suggestions.map(s => `<button class="suggestion-btn" onclick="searchEl.value=${JSON.stringify(s)};renderResults(${JSON.stringify(s)})">${escapeHtml(s)}</button>`).join('')}
+         </div>`
+      : `<p>Try a different fan name, model number, or part number</p>`;
     resultsEl.innerHTML = `
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
         <h3>No results found</h3>
-        <p>Try a different fan name, model number, or part number</p>
+        ${suggestHtml}
       </div>`;
     return;
   }
@@ -932,7 +1174,7 @@ function renderResults(query) {
       <div class="fan-header" onclick="this.parentElement.classList.toggle('open')">
         <div class="fan-header-left">
           <div class="fan-name">${highlightMatch(fan.name, q)}</div>
-          <div class="fan-model-nums">${fan.modelNumbers.map(m => highlightMatch(m, q)).join(' &middot; ')}</div>
+          <div class="fan-model-nums" id="mn-cell-${i}">${fan.modelNumbers.map(m => highlightMatch(m, q)).join(' &middot; ')}<button class="edit-btn model-edit-btn" onclick="event.stopPropagation();startEditModel(${i})" title="Edit model numbers"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div>
         </div>
         <div class="fan-header-right">
           <span class="parts-badge">${fan.parts.length} parts</span>
@@ -946,7 +1188,7 @@ function renderResults(query) {
           <tbody id="parts-tbody-${i}">
             ${fan.parts.map((p, pi) => {
               const pnDisplay = p.partNumber
-                ? `<span class="part-number">${highlightMatch(p.partNumber, q)}</span>`
+                ? `<span class="part-number">${highlightMatch(p.partNumber, q)}</span><button class="copy-btn" onclick="copyToClipboard(${JSON.stringify(p.partNumber)},this)" title="Copy part number"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>`
                 : '<span class="no-pn">N/A</span>';
               return `
               <tr>
