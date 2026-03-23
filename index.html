@@ -930,12 +930,27 @@ function searchFans(query) {
   const q = query.toLowerCase().trim();
   if (!q) return { fanResults: [], partResults: [] };
 
+  // Strip the last hyphen-segment from a string (e.g. "f-003-gr" → "f-003")
+  // Used so typing the wrong color suffix still finds the right fan
+  function stripLast(s) {
+    const i = s.lastIndexOf('-');
+    return i > 0 ? s.substring(0, i) : s;
+  }
+
+  // Build a stripped version of the query for base matching
+  const qBase = stripLast(q);
+
   // Search fans by name and model number
   const fanResults = fans.filter(fan => {
     if (fan.name.toLowerCase().includes(q)) return true;
     if (fan.modelNumbers.some(mn => {
       const mnl = mn.toLowerCase();
-      return mnl.includes(q) || q.startsWith(mnl);
+      if (mnl.includes(q) || q.startsWith(mnl)) return true;
+      // If query has a color/suffix segment that doesn't match, try matching
+      // by the base (everything before the last hyphen segment)
+      const mnBase = stripLast(mnl);
+      if (qBase && qBase !== q && (mnBase === qBase || mnl.includes(qBase))) return true;
+      return false;
     })) return true;
     // Also match if any part number matches
     if (fan.parts.some(p => p.partNumber.toLowerCase().includes(q))) return true;
