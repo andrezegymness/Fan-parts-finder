@@ -779,7 +779,10 @@ function saveModelEdits(v){ localStorage.setItem(MODEL_EDITS_KEY, JSON.stringify
 
 // Apply all stored data to in-memory fans array
 (function applyStoredData() {
-  // 1. Apply part-number edits
+  // 1. Append custom fans FIRST so subsequent steps can reference them
+  const custom = loadCustomFans();
+  fans.push(...custom);
+  // 2. Apply part-number edits (covers built-in and custom fans)
   const edits = loadEdits();
   fans.forEach(fan => {
     fan.parts.forEach(p => {
@@ -787,15 +790,12 @@ function saveModelEdits(v){ localStorage.setItem(MODEL_EDITS_KEY, JSON.stringify
       if (edits[key] !== undefined) p.partNumber = edits[key];
     });
   });
-  // 2. Apply added parts
+  // 3. Apply added parts (covers built-in and custom fans)
   const added = loadAdded();
   fans.forEach(fan => {
     const extra = added[fan.name];
     if (extra && extra.length) fan.parts.push(...extra);
   });
-  // 3. Append custom fans
-  const custom = loadCustomFans();
-  fans.push(...custom);
   // 4. Apply model number edits
   const modelEdits = loadModelEdits();
   fans.forEach(fan => {
