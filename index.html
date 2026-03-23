@@ -814,11 +814,15 @@ function showAddPartRow(fanResultIdx) {
     <td colspan="2">
       <div class="add-part-inputs">
         <input class="form-input inp-name" id="ap-name-${fanResultIdx}" type="text" placeholder="Part name" />
-        <input class="form-input inp-pn"   id="ap-pn-${fanResultIdx}"   type="text" placeholder="Part number (optional)" />
+        <input class="form-input inp-pn"   id="ap-pn-${fanResultIdx}"   type="text" placeholder="Part number (use ** for size)" />
         <span class="edit-actions">
           <button class="edit-save"   onclick="saveAddedPart(${fanResultIdx})">Save</button>
           <button class="edit-cancel" onclick="cancelAddedPart(${fanResultIdx})">Cancel</button>
         </span>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:5px">
+        Tip: use <code style="color:var(--accent)">**</code> in the part number to auto-copy to all size variants
+        (e.g. <code style="color:var(--orange)">RPL-FHW2203-**-BD</code>)
       </div>
     </td>`;
   tbody.appendChild(tr);
@@ -831,18 +835,55 @@ function showAddPartRow(fanResultIdx) {
   });
 }
 
+// Return all fans that share the same model base as the given fan
+// Base = model number with last hyphen-segment stripped (e.g. FH-W2203-52 → FH-W2203)
+function getModelFamily(fan) {
+  if (!fan.modelNumbers || !fan.modelNumbers.length) return [fan];
+  const primaryBase = fan.modelNumbers[0].toLowerCase();
+  const di = primaryBase.lastIndexOf('-');
+  if (di < 0) return [fan];
+  const base = primaryBase.substring(0, di);
+  return fans.filter(f =>
+    f.modelNumbers.some(mn => {
+      const mnl = mn.toLowerCase();
+      const d = mnl.lastIndexOf('-');
+      return d > 0 && mnl.substring(0, d) === base;
+    })
+  );
+}
+
+// Get the last segment of a model number (the size/variant, e.g. "52" from "FH-W2203-52")
+function getModelSuffix(modelNumber) {
+  const d = modelNumber.lastIndexOf('-');
+  return d >= 0 ? modelNumber.substring(d + 1) : modelNumber;
+}
+
 function saveAddedPart(fanResultIdx) {
   const fan  = _lastFanResults[fanResultIdx];
   if (!fan) return;
   const name = document.getElementById(`ap-name-${fanResultIdx}`).value.trim();
   const pn   = document.getElementById(`ap-pn-${fanResultIdx}`).value.trim();
   if (!name) { document.getElementById(`ap-name-${fanResultIdx}`).focus(); return; }
-  const newPart = { name, partNumber: pn };
-  fan.parts.push(newPart);
-  // Persist
+
   const added = loadAdded();
-  if (!added[fan.name]) added[fan.name] = [];
-  added[fan.name].push(newPart);
+
+  if (pn.includes('**') && fan.modelNumbers.length) {
+    // Spread to every fan in the size family, replacing ** with each fan's suffix
+    const family = getModelFamily(fan);
+    family.forEach(familyFan => {
+      const suffix  = getModelSuffix(familyFan.modelNumbers[0]);
+      const newPart = { name, partNumber: pn.replace(/\*\*/g, suffix) };
+      familyFan.parts.push(newPart);
+      if (!added[familyFan.name]) added[familyFan.name] = [];
+      added[familyFan.name].push(newPart);
+    });
+  } else {
+    const newPart = { name, partNumber: pn };
+    fan.parts.push(newPart);
+    if (!added[fan.name]) added[fan.name] = [];
+    added[fan.name].push(newPart);
+  }
+
   saveAdded(added);
   renderResults(searchEl.value);
 }
