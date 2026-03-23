@@ -823,6 +823,9 @@ function _decObjKeys(obj) {
   for (const k of Object.keys(obj)) out[_decFbKey(k)] = obj[k];
   return out;
 }
+// Firebase converts JS arrays to numeric-keyed objects on round-trip — restore them
+function _toArr(v) { return Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.values(v) : []); }
+
 function _toFb(data) {
   return { ...data, fanPartsEdits: _encObjKeys(data.fanPartsEdits),
                     fanPartsAdded: _encObjKeys(data.fanPartsAdded),
@@ -830,9 +833,17 @@ function _toFb(data) {
 }
 function _fromFb(data) {
   if (!data) return data;
-  return { ...data, fanPartsEdits: _decObjKeys(data.fanPartsEdits),
-                    fanPartsAdded: _decObjKeys(data.fanPartsAdded),
-                    fanModelEdits: _decObjKeys(data.fanModelEdits) };
+  // Restore customFans array and each fan's parts array
+  const customFans = _toArr(data.customFans).map(f => ({ ...f, parts: _toArr(f.parts) }));
+  // Restore fanPartsAdded: decode keys + convert each value back to array
+  const rawAdded = _decObjKeys(data.fanPartsAdded) || {};
+  const fanPartsAdded = {};
+  for (const k of Object.keys(rawAdded)) fanPartsAdded[k] = _toArr(rawAdded[k]);
+  // Restore fanModelEdits: decode keys + convert each value back to array
+  const rawModel = _decObjKeys(data.fanModelEdits) || {};
+  const fanModelEdits = {};
+  for (const k of Object.keys(rawModel)) fanModelEdits[k] = _toArr(rawModel[k]);
+  return { ...data, customFans, fanPartsEdits: _decObjKeys(data.fanPartsEdits), fanPartsAdded, fanModelEdits };
 }
 
 let _fbWritePending = false;
