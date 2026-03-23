@@ -888,7 +888,20 @@ async function initApp() {
       fbDb = firebase.database();
       // One-time fetch for initial render
       const snap = await fbDb.ref('sharedData').get();
-      if (snap.exists()) initialData = snap.val();
+      if (snap.exists()) {
+        initialData = snap.val();
+      } else {
+        // Firebase is empty — push local data up so all browsers sync
+        const hasLocalData = initialData && (
+          Object.keys(initialData.fanPartsEdits || {}).length > 0 ||
+          Object.keys(initialData.fanPartsAdded || {}).length > 0 ||
+          (initialData.customFans || []).length > 0 ||
+          Object.keys(initialData.fanModelEdits || {}).length > 0
+        );
+        if (hasLocalData) {
+          fbDb.ref('sharedData').set(initialData);
+        }
+      }
       // Real-time listener — fires on any remote change
       fbDb.ref('sharedData').on('value', snap => {
         if (_fbWritePending) return; // ignore echo of our own write
