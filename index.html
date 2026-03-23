@@ -947,9 +947,10 @@ function searchFans(query) {
       const mnl = mn.toLowerCase();
       if (mnl.includes(q) || q.startsWith(mnl)) return true;
       // If query has a color/suffix segment that doesn't match, try matching
-      // by the base (everything before the last hyphen segment)
+      // by the base (everything before the last hyphen segment).
+      // Guard: qBase must be at least 3 chars so "f" doesn't match everything.
       const mnBase = stripLast(mnl);
-      if (qBase && qBase !== q && (mnBase === qBase || mnl.includes(qBase))) return true;
+      if (qBase && qBase !== q && qBase.length >= 3 && (mnBase === qBase || mnl.includes(qBase))) return true;
       return false;
     })) return true;
     // Also match if any part number matches
