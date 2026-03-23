@@ -807,13 +807,41 @@ function saveAdded(v)     { _commit({ ..._syncData, fanPartsAdded:  v }); }
 function saveCustomFans(v){ _commit({ ..._syncData, customFans:     v }); }
 function saveModelEdits(v){ _commit({ ..._syncData, fanModelEdits:  v }); }
 
+// ── Firebase key encoding ─────────────────────────────────────────
+// Firebase keys can't contain . # $ / [ ] — fan/part names often have /
+function _encFbKey(k) { return encodeURIComponent(k).replace(/\./g, '%2E'); }
+function _decFbKey(k) { return decodeURIComponent(k); }
+function _encObjKeys(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+  const out = {};
+  for (const k of Object.keys(obj)) out[_encFbKey(k)] = obj[k];
+  return out;
+}
+function _decObjKeys(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+  const out = {};
+  for (const k of Object.keys(obj)) out[_decFbKey(k)] = obj[k];
+  return out;
+}
+function _toFb(data) {
+  return { ...data, fanPartsEdits: _encObjKeys(data.fanPartsEdits),
+                    fanPartsAdded: _encObjKeys(data.fanPartsAdded),
+                    fanModelEdits: _encObjKeys(data.fanModelEdits) };
+}
+function _fromFb(data) {
+  if (!data) return data;
+  return { ...data, fanPartsEdits: _decObjKeys(data.fanPartsEdits),
+                    fanPartsAdded: _decObjKeys(data.fanPartsAdded),
+                    fanModelEdits: _decObjKeys(data.fanModelEdits) };
+}
+
 let _fbWritePending = false;
 function _commit(data) {
   _syncData = data;
   localStorage.setItem(LOCAL_KEY, JSON.stringify(data));
   if (USE_FIREBASE && fbDb) {
     _fbWritePending = true;
-    fbDb.ref('sharedData').set(data).then(() => { _fbWritePending = false; });
+    fbDb.ref('sharedData').set(_toFb(data)).then(() => { _fbWritePending = false; });
   }
 }
 
@@ -889,7 +917,7 @@ async function initApp() {
       // One-time fetch for initial render
       const snap = await fbDb.ref('sharedData').get();
       if (snap.exists()) {
-        initialData = snap.val();
+        initialData = _fromFb(snap.val());
       } else {
         // Firebase is empty — push local data up so all browsers sync
         const hasLocalData = initialData && (
@@ -899,13 +927,13 @@ async function initApp() {
           Object.keys(initialData.fanModelEdits || {}).length > 0
         );
         if (hasLocalData) {
-          fbDb.ref('sharedData').set(initialData);
+          fbDb.ref('sharedData').set(_toFb(initialData));
         }
       }
       // Real-time listener — fires on any remote change
       fbDb.ref('sharedData').on('value', snap => {
         if (_fbWritePending) return; // ignore echo of our own write
-        const remote = snap.val();
+        const remote = _fromFb(snap.val());
         if (!remote || JSON.stringify(remote) === JSON.stringify(_syncData)) return;
         applyStoredData(remote);
         localStorage.setItem(LOCAL_KEY, JSON.stringify(remote));
